@@ -25,6 +25,11 @@ class LidarReal(Lidar):
     # The ROS topic from which we get Lidar data
     __SCAN_TOPIC = "/scan"
 
+    # The NeoRacer's LakiBeam1 publishes a full-circle scan of ~1440 bins
+    # (0.25 deg per bin). The sensor's live window is 270 deg (45-315 in its
+    # own frame): the rear ~90 deg wedge never carries a return and reads 0.
+    _NUM_SAMPLES: int = 1440
+
     def __init__(self):
         # ROS node
         self.node = ros2.create_node("scan_sub")
@@ -38,19 +43,20 @@ class LidarReal(Lidar):
         self.__samples = np.empty(0)
         self.__samples_new = np.empty(0)
 
-    # LIDAR Scan returns value in meters, multiplying by 100 to be processed in cm
-    # LIDAR Scan reversed, flipping order of data entry to correct for CW spin - matches with sim
-    # For RPLidar - replace "inf" with 0 to match sim LIDAR data
-    # Note: The real LIDAR returns a scan of length 1080.
+    # Meters -> cm; flip to clockwise order to match the sim convention; roll a
+    # half turn so index 0 is the front of the car. No-return samples (inf) are
+    # zeroed to match the sim, so the blind rear wedge reads 0.
     def __scan_callback(self, data):
-        scan_data = np.roll(np.flip(np.multiply(np.array(data.ranges), 100)), 720) # rotate 180 degrees to the right
-        self.__samples_new = np.array([0 if str(x) == "inf" else x for x in scan_data])
+        scan_data = np.asarray(data.ranges, dtype=np.float32) * 100.0
+        scan_data = np.roll(np.flip(scan_data), len(scan_data) // 2)
+        scan_data[~np.isfinite(scan_data)] = 0.0
+        self.__samples_new = scan_data
 
     def __update(self):
         self.__samples = self.__samples_new
 
-    def get_samples(self) -> NDArray[1080, np.float32]:
+    def get_samples(self) -> NDArray[1440, np.float32]:
         return self.__samples
 
-    def get_samples_async(self) -> NDArray[1080, np.float32]:
+    def get_samples_async(self) -> NDArray[1440, np.float32]:
         return self.__samples_new

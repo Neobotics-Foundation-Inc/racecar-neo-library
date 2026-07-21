@@ -19,7 +19,10 @@ class Lidar(abc.ABC):
     Returns the scan data captured by the Lidar.
     """
 
-    # The number of samples in a full Lidar scan.
+    # The number of samples in a full Lidar scan. Backends override this: the
+    # simulator produces 720 (0.5 deg per sample); the NeoRacer produces ~1440
+    # (0.25 deg per sample). Write length-agnostic code: index with len(scan)
+    # or get_num_samples(), never a hardcoded count.
     _NUM_SAMPLES: int = 720
 
     @abc.abstractmethod
@@ -28,11 +31,15 @@ class Lidar(abc.ABC):
         Returns the current LIDAR scan as an array of distance measurements.
 
         Returns:
-            An array of distance measurements in cm.
+            An array of distance measurements in cm. A sample with no return
+            reads 0. On the NeoRacer the sensor sees a 270 degree window, so
+            the rear ~90 degree wedge always reads 0.
 
         Note:
             Samples are in clockwise order, with the 0th sample directly in front of the
-            car.  Each sample is an equal angle apart.
+            car.  Each sample is an equal angle apart, but the sample count differs by
+            platform (720 in the simulator, ~1440 on the NeoRacer), so index relative
+            to len(scan) rather than a fixed number.
 
         Example::
 
@@ -41,6 +48,9 @@ class Lidar(abc.ABC):
 
             # Get the distance of the measurement directly in front of the car
             forward_distance = scan[0]
+
+            # Get the distance 90 degrees to the right, at any sample count
+            right_distance = scan[len(scan) // 4]
         """
         pass
 
@@ -75,7 +85,8 @@ class Lidar(abc.ABC):
         Returns the number of samples in a full LIDAR scan.
 
         Returns:
-            The number of points collected in a complete scan.
+            The number of points collected in a complete scan: 720 in the
+            simulator, 1440 on the NeoRacer.
 
         Example::
 

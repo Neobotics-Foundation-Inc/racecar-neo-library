@@ -57,22 +57,26 @@ class Drive(abc.ABC):
         self.set_speed_angle(0, 0)
 
     @abc.abstractmethod
-    def set_max_speed(self, max_speed: float = 0.25) -> None:
+    def set_max_speed(self, max_speed: float = 1.0) -> None:
         """
         Sets the maximum throttle in the forward and backward direction.
 
+        The NeoRacer library defaults to full scale (1.0); the driver's throttle
+        stage and the firmware's closed-loop ceiling still bound the physical
+        speed. Lower this to slow the whole program down in one place.
+
         Args:
             max_speed: The scale factor applied to speed inputs, ranging from
-                0.0 to 1.0.
+                0.0 to 1.0. Defaults to 1.0.
 
         Warning:
-            The RACECAR contains expensive and fragile equipment.  Please only increase
-            the max speed if you are in a safe environment without the potential for
-            hard collisions.
+            The RACECAR contains expensive and fragile equipment.  Please only run
+            full speed in a safe environment without the potential for hard
+            collisions.
 
         Example::
 
-            # Update the max speed to 0.5
+            # Halve the speed of every drive command
             rc.set_max_speed(0.5)
         """
         pass

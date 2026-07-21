@@ -12,6 +12,7 @@ File Description: Contains the Racecar class, the top level of the racecar_core 
 # General
 from datetime import datetime
 import threading
+import time
 from typing import Callable, Optional
 
 # ROS2
@@ -111,11 +112,32 @@ class RacecarReal(Racecar):
             "    CTRL + Z on keyboard = force quit the program"
         )
 
+    def __wait_for_first_scan(self, timeout: float = 5.0) -> None:
+        """
+        Spin until the first lidar scan is readable through get_samples(), so
+        update() never sees an empty array. The scan arrives on an async buffer
+        and get_samples() reads the per-frame copy, so prime that copy here
+        rather than racing the frame loop for it. The lidar streams within a
+        couple of seconds of the driver being up; if it is disabled or still
+        booting, start anyway after the timeout.
+        """
+        if len(self.lidar.get_samples()) > 0:
+            return
+        print(">> Waiting for the first lidar scan...")
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            self.__executor.spin_once(timeout_sec=0.1)
+            if len(self.lidar.get_samples_async()) > 0:
+                self.__update_modules()
+                return
+        print(">> Lidar is not streaming yet; starting without it")
+
     def go(self) -> None:
         self.__running = True
         if self.__user_start is None or self.__user_update is None:
             self.__user_start = self.__default_start
             self.__user_update = self.__default_update
+        self.__wait_for_first_scan()
         self.__handle_start()
         while self.__running:
             try:
@@ -133,6 +155,7 @@ class RacecarReal(Racecar):
         if self.__user_start is None or self.__user_update is None:
             self.__user_start = self.__default_start
             self.__user_update = self.__default_update
+        self.__wait_for_first_scan()
         self.__handle_start()
         while self.__running:
             self.__executor.spin_once()

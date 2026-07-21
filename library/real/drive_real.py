@@ -40,7 +40,7 @@ class DriveReal(Drive):
             AckermannDriveStamped, self.__TOPIC, qos_profile=1
         )
         self.__message = AckermannDriveStamped()
-        self.__max_speed = 0.50
+        self.__max_speed = 1.0
 
     def set_speed_angle(self, speed: float, angle: float) -> None:
         assert (
@@ -55,7 +55,7 @@ class DriveReal(Drive):
         angle = -angle
         self.__message.drive.steering_angle = float(angle)
 
-    def set_max_speed(self, max_speed: float = 0.25) -> None:
+    def set_max_speed(self, max_speed: float = 1.0) -> None:
         assert (
             0.0 <= max_speed <= 1.0
         ), f"max_speed [{max_speed}] must be between 0.0 and 1.0 inclusive."
