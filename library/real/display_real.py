@@ -11,7 +11,8 @@ File Description: Contains the Display module of the racecar_core library
 import cv2 as cv
 import numpy as np
 import os
-from nptyping import NDArray
+class NDArray:  # inline stub; nptyping is deliberately not a dependency
+    def __class_getitem__(cls, item): return cls
 
 import rclpy as ros2
 from std_msgs.msg import String

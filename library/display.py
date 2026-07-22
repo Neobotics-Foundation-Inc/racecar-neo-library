@@ -13,7 +13,8 @@ import abc
 import numpy as np
 import math
 from typing import Any
-from nptyping import NDArray
+class NDArray:  # inline stub; nptyping is deliberately not a dependency
+    def __class_getitem__(cls, item): return cls
 
 import racecar_utils as rc_utils
 

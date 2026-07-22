@@ -12,7 +12,8 @@ File Description: Contains helper functions to support common operations.
 import cv2 as cv
 import numpy as np
 from typing import Any, Optional
-from nptyping import NDArray
+class NDArray:  # inline stub; nptyping is deliberately not a dependency
+    def __class_getitem__(cls, item): return cls
 from enum import Enum, IntEnum
 
 

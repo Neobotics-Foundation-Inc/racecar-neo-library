@@ -11,7 +11,8 @@ File Description: Defines the interface for the Lidar module of the racecar_core
 
 import abc
 import numpy as np
-from nptyping import NDArray
+class NDArray:  # inline stub; nptyping is deliberately not a dependency
+    def __class_getitem__(cls, item): return cls
 
 
 class Lidar(abc.ABC):

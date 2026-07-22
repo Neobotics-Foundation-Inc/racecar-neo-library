@@ -13,7 +13,8 @@ from lidar import Lidar
 
 # General
 import numpy as np
-from nptyping import NDArray
+class NDArray:  # inline stub; nptyping is deliberately not a dependency
+    def __class_getitem__(cls, item): return cls
 
 # ROS2
 import rclpy as ros2

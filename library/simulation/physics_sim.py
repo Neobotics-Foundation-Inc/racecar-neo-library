@@ -1,6 +1,7 @@
 import struct
 import numpy as np
-from nptyping import NDArray
+class NDArray:  # inline stub; nptyping is deliberately not a dependency
+    def __class_getitem__(cls, item): return cls
 
 from physics import Physics
 
