@@ -39,6 +39,7 @@ class RacecarReal(Racecar):
     __FRAME_RATE = 60
 
     def __init__(self, isHeadless: bool = False):
+        print(">> Starting up (connecting to the car's hardware, usually a few seconds)...", flush=True)
         # initialize ROS 2
         ros2.init()
         self.__executor = ros2.get_global_executor()
