@@ -142,9 +142,12 @@ class RacecarReal(Racecar):
         while self.__running:
             try:
                 self.__executor.spin_once()
-            except KeyboardInterrupt:
+            except (KeyboardInterrupt, ros2.executors.ExternalShutdownException):
                 break
-        ros2.shutdown()
+        # Ctrl-C makes rclpy's signal handler shut the context down before we
+        # get here; shutting down twice raises RCLError.
+        if ros2.ok():
+            ros2.shutdown()
 
     def go_async(self) -> None:
         self.__running = True
