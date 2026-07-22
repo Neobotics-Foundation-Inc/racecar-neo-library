@@ -36,7 +36,7 @@ class PhysicsReal(Physics):
     __BUFFER_CAP = 60
 
     def __init__(self):
-        self.node = ros2.create_node("imu_sub")
+        self.node = ros2.create_node("imu_sub", start_parameter_services=False)
 
         qos_profile = QoSProfile(depth=1)
         qos_profile.history = QoSHistoryPolicy.KEEP_LAST

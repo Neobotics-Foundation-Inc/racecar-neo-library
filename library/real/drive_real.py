@@ -33,7 +33,7 @@ class DriveReal(Drive):
 
     def __init__(self):
         # ROS node
-        self.__node = ros2.create_node("drive_pub")
+        self.__node = ros2.create_node("drive_pub", start_parameter_services=False)
         # publish to the drive topic, which will publish a message
         # every time __update is called
         self.__publisher = self.__node.create_publisher(

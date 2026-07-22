@@ -44,7 +44,7 @@ class NavReal(Nav):
     __PLAN_TIMEOUT_S = 5.0
 
     def __init__(self):
-        self.node = ros2.create_node("rc_nav")
+        self.node = ros2.create_node("rc_nav", start_parameter_services=False)
         self.__planner = ActionClient(
             self.node, ComputePathToPose, "/compute_path_to_pose"
         )

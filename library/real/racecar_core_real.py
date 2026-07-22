@@ -42,7 +42,7 @@ class RacecarReal(Racecar):
         # initialize ROS 2
         ros2.init()
         self.__executor = ros2.get_global_executor()
-        self.__rate_node = ros2.create_node("rate_node")
+        self.__rate_node = ros2.create_node("rate_node", start_parameter_services=False)
 
         # Modules
         self.camera = camera_real.CameraReal()

@@ -81,7 +81,7 @@ class ControllerReal(Controller):
         self.__cur_back = 0
 
         # ROS node
-        self.node = ros2.create_node("controller")
+        self.node = ros2.create_node("controller", start_parameter_services=False)
 
         # subscribe to the controller topic, which will call
         # __controller_callback every time the controller state changes

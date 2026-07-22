@@ -43,7 +43,7 @@ class SlamReal(Slam):
 
     def __init__(self):
         # ROS node
-        self.node = ros2.create_node("rc_slam")
+        self.node = ros2.create_node("rc_slam", start_parameter_services=False)
 
         # /map is latched (TRANSIENT_LOCAL) and reliable from slam_toolbox.
         map_qos = QoSProfile(depth=1)

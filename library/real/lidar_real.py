@@ -33,7 +33,7 @@ class LidarReal(Lidar):
 
     def __init__(self):
         # ROS node
-        self.node = ros2.create_node("scan_sub")
+        self.node = ros2.create_node("scan_sub", start_parameter_services=False)
 
         # subscribe to the scan topic, which will call
         # __scan_callback every time the lidar sends data

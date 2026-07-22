@@ -38,7 +38,7 @@ class CameraReal(Camera):
         self.__bridge = CvBridge()
 
         # ROS node
-        self.node = ros2.create_node("image_sub")
+        self.node = ros2.create_node("image_sub", start_parameter_services=False)
 
         qos_profile = QoSProfile(depth=10)
         qos_profile.history = QoSHistoryPolicy.KEEP_LAST

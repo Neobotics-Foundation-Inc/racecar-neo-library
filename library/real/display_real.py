@@ -39,7 +39,7 @@ class DisplayReal(Display):
         # text only (see neoracer_ros2_driver/led_matrix.py). show_text()
         # publishes to /led_matrix/command; set_matrix()/get_matrix() operate
         # on an in-memory placeholder since raw-pixel control is not exposed.
-        self.node = ros2.create_node("display_node")
+        self.node = ros2.create_node("display_node", start_parameter_services=False)
         self.__matrix_pub = self.node.create_publisher(
             String, self.__LED_MATRIX_TOPIC, qos_profile=1
         )
