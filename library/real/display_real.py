@@ -20,10 +20,18 @@ from std_msgs.msg import String
 from display import Display
 
 
+_NO_PIXELS = (
+    "The NeoRacer dot matrix takes text only. Its 8x8 panel is driven by a "
+    "serial firmware that renders ASCII, with no raw-pixel or intensity "
+    "command, unlike the MAX7219 chain on the racecar_neo platform. Use "
+    "rc.display.show_text() instead."
+)
+
+
 class DisplayReal(Display):
     __WINDOW_NAME: str = "RACECAR display window"
     __DISPLAY: str = ":0"
-    __LED_MATRIX_TOPIC: str = "/led_matrix/command"
+    __TEXT_TOPIC: str = "/dotmatrix/text"
 
     def __init__(self, isHeadless):
         Display.__init__(self, isHeadless)
@@ -35,15 +43,13 @@ class DisplayReal(Display):
         else:
             print(f"Display {self.__DISPLAY} not found.")
 
-        # Dot matrix is an 8x8 panel driven by a serial firmware that accepts
-        # text only (see neoracer_ros2_driver/led_matrix.py). show_text()
-        # publishes to /led_matrix/command; set_matrix()/get_matrix() operate
-        # on an in-memory placeholder since raw-pixel control is not exposed.
+        # The panel is an 8x8 module behind a serial firmware that accepts
+        # text only (see neoracer_ros2_driver/led_matrix_node.py), so only
+        # show_text() reaches hardware. There is no /dotmatrix/pixels here.
         self.node = ros2.create_node("display_node", start_parameter_services=False)
-        self.__matrix_pub = self.node.create_publisher(
-            String, self.__LED_MATRIX_TOPIC, qos_profile=1
+        self.__text_pub = self.node.create_publisher(
+            String, self.__TEXT_TOPIC, qos_profile=1
         )
-        self.__matrix = np.zeros((8, 24), dtype=np.uint8)
 
     def create_window(self) -> None:
         if not self._Display__isHeadless and self.__display_found:
@@ -55,23 +61,17 @@ class DisplayReal(Display):
             cv.waitKey(1)
 
     def set_matrix(self, matrix: NDArray[(8, 24), np.uint8]) -> None:
-        arr = np.array(matrix, dtype=np.uint8)
-        if arr.shape != (8, 24):
-            print("WARNING: Matrix must be of shape (8, 24). Reshaping to fit.")
-            arr = arr.reshape((8, 24))
-        self.__matrix = arr
+        raise NotImplementedError(_NO_PIXELS)
 
     def get_matrix(self) -> NDArray[(8, 24), np.uint8]:
-        return self.__matrix
+        raise NotImplementedError(_NO_PIXELS)
 
     def show_text(self, text: str, scroll_speed: float = 2.0) -> None:
         # The firmware ignores scroll_speed; it scrolls automatically when the
         # rendered text exceeds the 8-pixel panel width.
         msg = String()
         msg.data = text
-        self.__matrix_pub.publish(msg)
+        self.__text_pub.publish(msg)
 
     def set_matrix_intensity(self, intensity: float) -> None:
-        assert (
-            0.0 <= intensity <= 1.0
-        ), f"intensity [{intensity}] must be between 0.0 and 1.0 inclusive."
+        raise NotImplementedError(_NO_PIXELS)

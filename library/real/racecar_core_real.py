@@ -23,10 +23,13 @@ import camera_real
 import controller_real
 import display_real
 import drive_real
+import led_real
 import lidar_real
 import nav_real
 import physics_real
 import slam_real
+import telemetry_real
+import vision_real
 
 from racecar_core import Racecar
 
@@ -50,10 +53,13 @@ class RacecarReal(Racecar):
         self.controller = controller_real.ControllerReal(self)
         self.display = display_real.DisplayReal(isHeadless)
         self.drive = drive_real.DriveReal()
+        self.led = led_real.LedReal()
         self.lidar = lidar_real.LidarReal()
         self.physics = physics_real.PhysicsReal()
         self.slam = slam_real.SlamReal()
         self.nav = nav_real.NavReal()
+        self.telemetry = telemetry_real.TelemetryReal()
+        self.vision = vision_real.VisionReal()
 
         # Add all nodes to the executor
         rate_added = self.__executor.add_node(self.__rate_node)
@@ -64,7 +70,16 @@ class RacecarReal(Racecar):
         slam_added = self.__executor.add_node(self.slam.node)
         nav_added = self.__executor.add_node(self.nav.node)
         display_added = self.__executor.add_node(self.display.node)
-        assert rate_added and lidar_added and camera_added and controller_added, (
+        led_added = self.__executor.add_node(self.led.node)
+        telemetry_added = self.__executor.add_node(self.telemetry.node)
+        vision_added = self.__executor.add_node(self.vision.node)
+        # Drive is absent here: unlike upstream it has no republish timer of its
+        # own, so it is driven from __update_modules on the run thread.
+        assert (
+            rate_added and lidar_added and camera_added and controller_added
+            and physics_added and display_added and slam_added and nav_added
+            and led_added and telemetry_added and vision_added
+        ), (
             "Issues initializing Racecar nodes. Node status: \n"
             f"Rate operational: {rate_added} | "
             f"Camera operational: {camera_added} | "
@@ -74,6 +89,9 @@ class RacecarReal(Racecar):
             f"Display operational: {display_added} | "
             f"Slam operational: {slam_added} | "
             f"Nav operational: {nav_added} | "
+            f"Led operational: {led_added} | "
+            f"Telemetry operational: {telemetry_added} | "
+            f"Vision operational: {vision_added} | "
         )
 
         # User provided start and update functions
@@ -243,6 +261,8 @@ class RacecarReal(Racecar):
         self.lidar._LidarReal__update()
         self.slam._SlamReal__update()
         self.nav._NavReal__update()
+        self.vision._VisionReal__update()
+        self.telemetry._TelemetryReal__update()
 
     def __default_start(self):
         """
