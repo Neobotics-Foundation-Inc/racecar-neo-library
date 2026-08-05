@@ -17,11 +17,13 @@ import camera
 import controller
 import display
 import drive
+import led
 import lidar
 import nav
 import physics
 import slam
 import telemetry
+import vision
 
 import racecar_utils as rc_utils
 
@@ -37,11 +39,13 @@ class Racecar(abc.ABC):
         self.controller: controller.Controller
         self.display: display.Display
         self.drive: drive.Drive
+        self.led: led.Led
         self.lidar: lidar.Lidar
         self.nav: nav.Nav
         self.physics: physics.Physics
         self.slam: slam.Slam
         self.telemetry: telemetry.Telemetry
+        self.vision: vision.Vision
 
     @abc.abstractmethod
     def go(self) -> None:
