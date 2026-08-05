@@ -9,7 +9,11 @@ Modules
    controller
    display
    drive
+   led
    lidar
+   nav
    physics
+   slam
    telemetry
+   vision
    utils
