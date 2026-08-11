@@ -253,6 +253,17 @@ class Display(abc.ABC):
 
 
     @abc.abstractmethod
+    def clear(self) -> None:
+        """
+        Returns the dot matrix to its idle state.
+
+        Example::
+
+            rc.display.clear()
+        """
+        pass
+
+    @abc.abstractmethod
     def get_matrix(self) -> NDArray[(8, 24), np.uint8]:
         """
         Returns the current configuration of the dot matrix display module.

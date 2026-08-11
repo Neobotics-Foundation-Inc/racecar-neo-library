@@ -91,6 +91,9 @@ class DisplaySim(Display):
     def get_matrix(self) -> NDArray[(8, 24), np.uint8]:
         return self.__matrix
 
+    def clear(self) -> None:
+        self.set_matrix(self.new_matrix())
+
     def show_text(
         self,
         text: str,
