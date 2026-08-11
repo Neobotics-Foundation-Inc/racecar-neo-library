@@ -32,6 +32,9 @@ class DisplayReal(Display):
     __WINDOW_NAME: str = "RACECAR display window"
     __DISPLAY: str = ":0"
     __TEXT_TOPIC: str = "/dotmatrix/text"
+    # Mirrors idle_text in neoracer_ros2_driver/config/led_matrix.yaml, which
+    # led_matrix_node writes on startup and shutdown.
+    __IDLE_TEXT: str = "N"
 
     def __init__(self, isHeadless):
         Display.__init__(self, isHeadless)
@@ -72,6 +75,11 @@ class DisplayReal(Display):
         msg = String()
         msg.data = text
         self.__text_pub.publish(msg)
+
+    def clear(self) -> None:
+        # The panel holds the last frame written, so returning it to the idle
+        # frame is the clear. show_text(" ") blanks it instead.
+        self.show_text(self.__IDLE_TEXT)
 
     def set_matrix_intensity(self, intensity: float) -> None:
         raise NotImplementedError(_NO_PIXELS)
