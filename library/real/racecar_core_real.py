@@ -259,9 +259,9 @@ class RacecarReal(Racecar):
         self.camera._CameraReal__update()
         self.physics._PhysicsReal__update()
         self.lidar._LidarReal__update()
-        self.slam._SlamReal__update()
         self.nav._NavReal__update()
         self.vision._VisionReal__update()
+        self.slam._SlamReal__update()
         self.telemetry._TelemetryReal__update()
 
     def __default_start(self):

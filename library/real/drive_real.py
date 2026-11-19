@@ -25,6 +25,9 @@ class DriveReal(Drive):
     # The ROS topic to which we publish drive messages
     __TOPIC = "/drive"
 
+    # ROS frame ID stamped on every published drive message
+    __FRAME_ID = "base_link"
+
     # PWM constants
     __PWM_TURN_RIGHT = 3000
     __PWM_TURN_LEFT = 9000
@@ -40,6 +43,9 @@ class DriveReal(Drive):
             AckermannDriveStamped, self.__TOPIC, qos_profile=1
         )
         self.__message = AckermannDriveStamped()
+        self.__message.header.frame_id = self.__FRAME_ID
+        # The NeoRacer starts at full scale. The driver's throttle stage and the
+        # firmware bound the physical speed.
         self.__max_speed = 1.0
 
     def set_speed_angle(self, speed: float, angle: float) -> None:
@@ -50,7 +56,7 @@ class DriveReal(Drive):
             -1.0 <= angle <= 1.0
         ), f"angle [{angle}] must be between -1.0 and 1.0 inclusive."
 
-        self.__message.drive.speed = speed * self.__max_speed
+        self.__message.drive.speed = float(speed * self.__max_speed)
 
         angle = -angle
         self.__message.drive.steering_angle = float(angle)
@@ -64,6 +70,7 @@ class DriveReal(Drive):
 
     def __update(self):
         """
-        Publishes the current drive message.
+        Publishes the current drive message. racecar_core_real calls this once
+        per frame from its run thread. The module has no publish timer.
         """
         self.__publisher.publish(self.__message)

@@ -25,7 +25,7 @@ from rclpy.qos import (
     QoSReliabilityPolicy,
     QoSProfile,
 )
-from sensor_msgs.msg import Imu, MagneticField
+from sensor_msgs.msg import BatteryState, Imu, MagneticField
 from std_msgs.msg import Float32, Float32MultiArray
 
 
@@ -44,8 +44,10 @@ class PhysicsReal(Physics):
     __MAG_TOPIC = "/mag"
     # Signed forward speed (m/s), integrated from the wheel encoder.
     __ENCODER_TOPIC = "/encoder/speed"
-    # Pack voltage in V, and the FlySky RC channels normalized to [-1, 1].
-    __VOLTAGE_TOPIC = "/battery/voltage"
+    # Pack voltage in V, from the controller node's BatteryState. The NeoRacer
+    # publishes one reading about every two seconds. Its current field is NaN.
+    __BATTERY_TOPIC = "/battery/state"
+    # The eight FlySky RC channels, normalized to [-1, 1].
     __RC_TOPIC = "/rc/channels"
 
     # Limit on buffer size to prevent memory overflow
@@ -76,9 +78,9 @@ class PhysicsReal(Physics):
             Float32, self.__ENCODER_TOPIC, self.__encoder_callback, qos_profile
         )
 
-        # subscribe to the power telemetry (V, A) and RC channel topics
-        self.__voltage_sub = self.node.create_subscription(
-            Float32, self.__VOLTAGE_TOPIC, self.__voltage_callback, qos_profile
+        # subscribe to the battery state (V) and RC channel topics
+        self.__battery_sub = self.node.create_subscription(
+            BatteryState, self.__BATTERY_TOPIC, self.__battery_callback, 10
         )
         self.__rc_sub = self.node.create_subscription(
             Float32MultiArray, self.__RC_TOPIC, self.__rc_callback, qos_profile
@@ -93,7 +95,6 @@ class PhysicsReal(Physics):
         self.__encoder_speed = 0.0
         self.__encoder_speed_buffer = deque()
         self.__voltage = 0.0
-        self.__voltage_buffer = deque()
         self.__rc_channels = np.zeros(8)
 
     def __imu_callback(self, data):
@@ -127,10 +128,10 @@ class PhysicsReal(Physics):
         if len(self.__encoder_speed_buffer) > self.__BUFFER_CAP:
             self.__encoder_speed_buffer.popleft()
 
-    def __voltage_callback(self, data):
-        self.__voltage_buffer.append(data.data)
-        if len(self.__voltage_buffer) > self.__BUFFER_CAP:
-            self.__voltage_buffer.popleft()
+    def __battery_callback(self, data):
+        # Only the voltage is read. The NeoRacer has no current sense, so the
+        # message carries NaN for current and get_battery_current raises.
+        self.__voltage = float(data.voltage)
 
     def __rc_callback(self, data):
         # RC channels are control inputs; keep the most recent frame, not an
@@ -155,10 +156,6 @@ class PhysicsReal(Physics):
         if len(self.__encoder_speed_buffer) > 0:
             self.__encoder_speed = float(np.mean(self.__encoder_speed_buffer))
             self.__encoder_speed_buffer.clear()
-
-        if len(self.__voltage_buffer) > 0:
-            self.__voltage = float(np.mean(self.__voltage_buffer))
-            self.__voltage_buffer.clear()
 
     def get_linear_acceleration(self) -> NDArray[3, np.float32]:
         return np.array(self.__acceleration)

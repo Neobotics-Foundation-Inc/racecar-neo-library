@@ -1,163 +1,161 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
 
 File Name: slam_real.py
-File Description: Contains the Slam module of the racecar_core library, backed by slam_toolbox.
+File Description: Contains the Slam module of the racecar_core library.
+Subscribes to the driver's autonomy service: /autonomy/status (mode, map,
+localized; latched, 1 Hz), /autonomy/pose (map pose, 20 Hz), and /map (the
+occupancy grid; latched), and saves through the /autonomy/save_map service.
+Only standard ROS messages are used, so it loads on a car without SLAM
+installed and then reports mode "off".
 """
 
-from slam import Slam
-
-# General
-import math
-import os
-from typing import List, Tuple
+import threading
+import time
+from typing import Optional, Tuple
 
 import numpy as np
 
-# ROS2
-from nav_msgs.msg import OccupancyGrid
+from slam import OccupancyMap, Slam, heading_degrees
+
 import rclpy as ros2
-from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
-from rclpy.time import Time
-from slam_toolbox.srv import Clear, DeserializePoseGraph, SerializePoseGraph
-from tf2_ros import Buffer, TransformListener
+from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy
+from diagnostic_msgs.msg import DiagnosticStatus
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from nav_msgs.msg import OccupancyGrid
+from std_srvs.srv import Trigger
 
 
 class SlamReal(Slam):
-    # Topics and frames published by the slam.launch.py bringup.
+    __STATUS_TOPIC = "/autonomy/status"
+    __POSE_TOPIC = "/autonomy/pose"
     __MAP_TOPIC = "/map"
-    __MAP_FRAME = "map"
-    __BASE_FRAME = "base_footprint"
+    __SAVE_SERVICE = "/autonomy/save_map"
 
-    # Saved pose-graphs live here (matches the simulator's maps directory).
-    __MAPS_DIR = os.path.expanduser("~/.neoracer/maps")
-
-    # Student-facing map contract (matches the simulator): 160 x 160 @ 0.25 m.
-    __GRID_W = 160
-    __GRID_H = 160
-    __CELL_M = 0.25
+    # The status arrives once a second; older than this, the service has stopped.
+    __STATUS_TIMEOUT_S = 5.0
 
     def __init__(self):
-        # ROS node
-        self.node = ros2.create_node("rc_slam", start_parameter_services=False)
+        self.node = ros2.create_node("slam_sub", start_parameter_services=False)
 
-        # /map is latched (TRANSIENT_LOCAL) and reliable from slam_toolbox.
-        map_qos = QoSProfile(depth=1)
-        map_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
-        map_qos.reliability = ReliabilityPolicy.RELIABLE
+        latched = QoSProfile(
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        )
+        self.__status_sub = self.node.create_subscription(
+            DiagnosticStatus, self.__STATUS_TOPIC, self.__status_callback, latched
+        )
+        self.__pose_sub = self.node.create_subscription(
+            PoseWithCovarianceStamped, self.__POSE_TOPIC, self.__pose_callback, 10
+        )
         self.__map_sub = self.node.create_subscription(
-            OccupancyGrid, self.__MAP_TOPIC, self.__map_callback, map_qos
+            OccupancyGrid, self.__MAP_TOPIC, self.__map_callback, latched
         )
-        self.__map_msg = None
+        self.__save_client = self.node.create_client(Trigger, self.__SAVE_SERVICE)
 
-        # map -> base_footprint pose is read from the TF tree.
-        self.__tf_buffer = Buffer()
-        self.__tf_listener = TransformListener(self.__tf_buffer, self.node)
-        self.__pose = (0.0, 0.0, 0.0)
+        self.__lock = threading.Lock()
+        self.__status: dict = {}
+        self.__status_time: Optional[float] = None
+        self.__pose_new: Optional[Tuple[float, float, float]] = None
+        self.__map: Optional[OccupancyMap] = None
+        self.__save_status = ""
 
-        # slam_toolbox save / load / clear service clients.
-        self.__serialize = self.node.create_client(
-            SerializePoseGraph, "/slam_toolbox/serialize_map"
-        )
-        self.__deserialize = self.node.create_client(
-            DeserializePoseGraph, "/slam_toolbox/deserialize_map"
-        )
-        self.__clear = self.node.create_client(Clear, "/slam_toolbox/clear_changes")
+        # Latched once per frame by __update
+        self.__mode = "off"
+        self.__map_name = ""
+        self.__localized = False
+        self.__pose: Optional[Tuple[float, float, float]] = None
+
+    def __status_callback(self, msg):
+        values = {kv.key: kv.value for kv in msg.values}
+        with self.__lock:
+            self.__status = values
+            self.__status_time = time.monotonic()
+
+    def __pose_callback(self, msg):
+        p, q = msg.pose.pose.position, msg.pose.pose.orientation
+        pose = (p.x, p.y, heading_degrees(q.z, q.w))
+        with self.__lock:
+            self.__pose_new = pose
 
     def __map_callback(self, msg):
-        self.__map_msg = msg
+        info = msg.info
+        data = np.asarray(msg.data, dtype=np.int8).reshape(info.height, info.width)
+        grid = OccupancyMap(
+            info.width,
+            info.height,
+            info.resolution,
+            (info.origin.position.x, info.origin.position.y),
+            data,
+        )
+        with self.__lock:
+            self.__map = grid
+
+    def __current(self) -> Tuple[str, str, bool]:
+        """Mode, map name, and localized from the newest status; "off" once it is stale."""
+        with self.__lock:
+            values, at = dict(self.__status), self.__status_time
+        mode = values.get("mode", "off")
+        if at is None or time.monotonic() - at > self.__STATUS_TIMEOUT_S:
+            mode = "off"
+        if mode not in ("mapping", "localization"):
+            return "off", "", False
+        return mode, values.get("map", ""), values.get("localized") == "true"
 
     def __update(self):
-        # Refresh the cached pose from the latest TF every frame.
-        if self.__tf_buffer.can_transform(self.__MAP_FRAME, self.__BASE_FRAME, Time()):
-            t = self.__tf_buffer.lookup_transform(
-                self.__MAP_FRAME, self.__BASE_FRAME, Time()
-            ).transform
-            q = t.rotation
-            yaw = math.atan2(
-                2.0 * (q.w * q.z + q.x * q.y),
-                1.0 - 2.0 * (q.y * q.y + q.z * q.z),
-            )
-            self.__pose = (t.translation.x, t.translation.y, yaw)
+        self.__mode, self.__map_name, self.__localized = self.__current()
+        with self.__lock:
+            self.__pose = self.__pose_new if self.__mode != "off" else None
 
-    # ── Slam interface ──────────────────────────────────────────
+    def get_mode(self) -> str:
+        return self.__mode
 
-    def update(self, scan) -> Tuple[float, float, float]:
-        # slam_toolbox ingests /scan directly; scan is accepted for sim parity.
+    def get_map_name(self) -> str:
+        return self.__map_name
+
+    def is_localized(self) -> bool:
+        return self.__localized
+
+    def get_pose(self) -> Optional[Tuple[float, float, float]]:
         return self.__pose
 
-    def get_pose(self) -> Tuple[float, float, float]:
-        return self.__pose
+    def get_pose_async(self) -> Optional[Tuple[float, float, float]]:
+        if self.__current()[0] == "off":
+            return None
+        with self.__lock:
+            return self.__pose_new
 
-    def get_map(self) -> Tuple[int, int, float, List[int]]:
-        if self.__map_msg is None:
-            return (
-                self.__GRID_W,
-                self.__GRID_H,
-                self.__CELL_M,
-                [-1] * (self.__GRID_W * self.__GRID_H),
-            )
-        return self.__resample(self.__map_msg)
+    def get_map(self) -> Optional[OccupancyMap]:
+        if self.__current()[0] == "off":
+            return None
+        with self.__lock:
+            return self.__map
 
-    def reset(self) -> None:
-        # slam_toolbox has no live full-map reset: clear interactive changes and
-        # drop the cached map. A fresh map requires relaunching slam.launch.py.
-        self.__map_msg = None
-        if self.__clear.service_is_ready():
-            self.__clear.call_async(Clear.Request())
+    def save_map(self) -> None:
+        if self.__save_status == "saving":
+            return
+        if self.__current()[0] != "mapping":
+            self.__save_status = "failed: not mapping"
+            return
+        if not self.__save_client.service_is_ready():
+            self.__save_status = "failed: the autonomy service is not answering"
+            return
+        self.__save_status = "saving"
+        future = self.__save_client.call_async(Trigger.Request())
+        future.add_done_callback(self.__save_done)
 
-    def save_map(self, name: str) -> None:
-        os.makedirs(self.__MAPS_DIR, exist_ok=True)
-        request = SerializePoseGraph.Request()
-        request.filename = os.path.join(self.__MAPS_DIR, name)
-        self.__serialize.call_async(request)
+    def __save_done(self, future):
+        try:
+            result = future.result()
+        except Exception as exc:  # the service went away mid-call
+            self.__save_status = f"failed: {exc}"
+            return
+        self.__save_status = "saved" if result.success else f"failed: {result.message}"
 
-    def load_map(self, name: str) -> bool:
-        path = os.path.join(self.__MAPS_DIR, name)
-        if not os.path.exists(path + ".posegraph"):
-            return False
-        request = DeserializePoseGraph.Request()
-        request.filename = path
-        request.match_type = DeserializePoseGraph.Request.START_AT_FIRST_NODE
-        self.__deserialize.call_async(request)
-        return True
-
-    # ── Internals ───────────────────────────────────────────────
-
-    def __resample(self, m) -> Tuple[int, int, float, List[int]]:
-        # Downsample the fine slam_toolbox grid onto the 160 x 160 @ 0.25 m
-        # student contract, centered on the explored map. A target cell is
-        # occupied if any covered source cell is, else free if any is known,
-        # else unknown.
-        res = m.info.resolution
-        width, height = m.info.width, m.info.height
-        src = np.array(m.data, dtype=np.int16).reshape(height, width)
-        ratio = int(round(self.__CELL_M / res))
-        sub_w = self.__GRID_W * ratio
-        sub_h = self.__GRID_H * ratio
-
-        map_cx = m.info.origin.position.x + width * res / 2.0
-        map_cy = m.info.origin.position.y + height * res / 2.0
-        win_ox = map_cx - self.__GRID_W * self.__CELL_M / 2.0
-        win_oy = map_cy - self.__GRID_H * self.__CELL_M / 2.0
-        sx0 = int(round((win_ox - m.info.origin.position.x) / res))
-        sy0 = int(round((win_oy - m.info.origin.position.y) / res))
-
-        region = np.full((sub_h, sub_w), -1, dtype=np.int16)
-        src_x0, src_y0 = max(0, sx0), max(0, sy0)
-        src_x1, src_y1 = min(width, sx0 + sub_w), min(height, sy0 + sub_h)
-        if src_x1 > src_x0 and src_y1 > src_y0:
-            dx, dy = src_x0 - sx0, src_y0 - sy0
-            region[dy:dy + (src_y1 - src_y0), dx:dx + (src_x1 - src_x0)] = (
-                src[src_y0:src_y1, src_x0:src_x1]
-            )
-
-        blocks = region.reshape(self.__GRID_H, ratio, self.__GRID_W, ratio)
-        occupied = (blocks >= 50).any(axis=(1, 3))
-        known = (blocks >= 0).any(axis=(1, 3))
-        out = np.where(occupied, 100, np.where(known, 0, -1)).astype(np.int16)
-        return (self.__GRID_W, self.__GRID_H, self.__CELL_M, out.flatten().tolist())
+    def get_save_status(self) -> str:
+        return self.__save_status
