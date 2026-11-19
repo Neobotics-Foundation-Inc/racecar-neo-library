@@ -23,7 +23,7 @@ Methodology:
   and battery current calls, since the NeoRacer has none of that hardware.
 - Count a call as failed when it raises anything else, when the camera or the lidar
   returns no data, or when the lidar scan is not 1440 samples long.
-- Clear the dot matrix, print a summary, and stop the program as Ctrl+C would.
+- Clear the dot matrix, print a summary, and exit with status 1 when a call failed.
 
 Expected Outcome: The car does not move. The dot matrix shows CHECK for about
 three seconds and then returns to its idle letter. The terminal prints one line
@@ -40,7 +40,6 @@ Run it on the car from this folder: python3 car_check.py
 """
 
 import os
-import signal
 import sys
 from pathlib import Path
 
@@ -291,8 +290,9 @@ def update():
         f"{counts['WARN']} warnings, {counts['FAIL']} failed",
         flush=True,
     )
-    # the same signal as Ctrl+C, which go() handles with a clean exit
-    os.kill(os.getpid(), signal.SIGINT)
+    # Exit at once with the result. A Ctrl+C sent from inside update() lets the
+    # run thread publish once more after ROS shuts down, which prints a traceback.
+    os._exit(1 if counts["FAIL"] else 0)
 
 
 ########################################################################################
