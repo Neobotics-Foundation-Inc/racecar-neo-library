@@ -43,6 +43,9 @@ class Detection:
 class Vision(abc.ABC):
     """
     Provides access to onboard ML object detection via the Coral EdgeTPU.
+
+    On the NeoRacer, the detections come from a YOLO model on the car's GPU,
+    published on the same topic.
     """
 
     @abc.abstractmethod

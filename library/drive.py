@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -13,19 +13,24 @@ import abc
 
 
 class Drive(abc.ABC):
+    """
+    Controls the car's speed and steering.
+    """
+
     @abc.abstractmethod
     def set_speed_angle(self, speed: float, angle: float) -> None:
         """
-        Sets the throttle applied to the back wheels and the angle of the front wheels.
+        Sets the car's target speed and the angle of the front wheels.
 
         Args:
-            speed: The amount of throttle (torque) applied to the back wheels from -1.0
-                (full backward) to 1.0 (full forward).
+            speed: The target speed from -1.0 (full backward) to 1.0 (full forward),
+                scaled by the maximum speed (see set_max_speed).
             angle: The amount to turn the front wheels from -1.0 (full left) to 1.0
                 (full right).
 
         Note:
-            The speed and angle arguments are unitless ratios.
+            The speed and angle arguments are unitless ratios. The car holds the
+            requested speed with a closed-loop controller on its drive encoder.
 
         Example::
 
@@ -59,15 +64,18 @@ class Drive(abc.ABC):
     @abc.abstractmethod
     def set_max_speed(self, max_speed: float = 1.0) -> None:
         """
-        Sets the maximum throttle in the forward and backward direction.
-
-        The NeoRacer library defaults to full scale (1.0); the driver's throttle
-        stage and the firmware's closed-loop ceiling still bound the physical
-        speed. Lower this to slow the whole program down in one place.
+        Sets the maximum speed in the forward and backward direction.
 
         Args:
             max_speed: The scale factor applied to speed inputs, ranging from
-                0.0 to 1.0. Defaults to 1.0.
+                0.0 to 1.0. Defaults to 1.0 on the NeoRacer and 0.25 in
+                RacecarSim.
+
+        Note:
+            The NeoRacer starts at a max speed of 1.0 (full scale). A speed of
+            1.0 then commands the driver's top speed, which is 6 m/s in the
+            driver's default settings. RacecarSim starts at a max speed of 0.25.
+            Lower the max speed to slow the whole program down in one place.
 
         Warning:
             The RACECAR contains expensive and fragile equipment.  Please only run
@@ -76,7 +84,7 @@ class Drive(abc.ABC):
 
         Example::
 
-            # Halve the speed of every drive command
-            rc.set_max_speed(0.5)
+            # Update the max speed to 0.5
+            rc.drive.set_max_speed(0.5)
         """
         pass

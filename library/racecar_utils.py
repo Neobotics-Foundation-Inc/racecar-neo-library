@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -12,8 +12,8 @@ File Description: Contains helper functions to support common operations.
 import cv2 as cv
 import numpy as np
 from typing import Any, Optional
-class NDArray:  # inline stub; nptyping is deliberately not a dependency
-    def __class_getitem__(cls, item): return cls
+class NDArray:  # stub - no runtime dependency on nptyping
+    def __class_getitem__(cls, _): return cls
 from enum import Enum, IntEnum
 
 
@@ -106,6 +106,52 @@ def print_warning(text: str) -> None:
         rc_utils.print_warning("Warning: Potential collision detected, reducing speed")
     """
     print_colored(text, TerminalColor.yellow)
+
+
+def get_data_dir(subfolder: Optional[str] = None) -> str:
+    """
+    Returns the folder where the car keeps its data, such as camera captures.
+
+    Args:
+        subfolder: A folder inside the data folder, such as "images". It is
+            created when it does not exist.
+
+    Returns:
+        The path of the data folder, or of the subfolder inside it.
+
+    Note:
+        --- In the Simulator ---
+        ~/data on the computer running the program.
+
+        --- In the Physical RACECAR ---
+        The car's data folder: on its NVMe drive when one is set up, else
+        ~/data on the SD card. The RACECAR_DATA_DIR environment variable
+        names it; `racecar data` prints it in a terminal.
+
+        On the NeoRacer, the data folder is ~/neoracer_data on the car's NVMe
+        drive. The RACECAR_DATA_DIR environment variable names it, and
+        `racecar data` prints it in a terminal.
+
+    Example::
+
+        # Save the current camera frame into the car's images folder
+        folder = rc_utils.get_data_dir("images")
+        cv.imwrite(os.path.join(folder, "frame.png"), rc.camera.get_color_image())
+    """
+    import os
+
+    root = os.environ.get("RACECAR_DATA_DIR", "")
+    if not root:
+        try:
+            with open("/run/racecar/data_root") as f:
+                root = f.read().strip()
+        except OSError:
+            root = ""
+    path = os.path.expanduser(root or "~/data")
+    if subfolder:
+        path = os.path.join(path, subfolder)
+    os.makedirs(path, exist_ok=True)
+    return path
 
 
 def clamp(value: float, min: float, max: float) -> float:

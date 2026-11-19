@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -25,7 +25,6 @@ import display_real
 import drive_real
 import led_real
 import lidar_real
-import nav_real
 import physics_real
 import slam_real
 import telemetry_real
@@ -57,7 +56,6 @@ class RacecarReal(Racecar):
         self.lidar = lidar_real.LidarReal()
         self.physics = physics_real.PhysicsReal()
         self.slam = slam_real.SlamReal()
-        self.nav = nav_real.NavReal()
         self.telemetry = telemetry_real.TelemetryReal()
         self.vision = vision_real.VisionReal()
 
@@ -68,7 +66,6 @@ class RacecarReal(Racecar):
         controller_added = self.__executor.add_node(self.controller.node)
         physics_added = self.__executor.add_node(self.physics.node)
         slam_added = self.__executor.add_node(self.slam.node)
-        nav_added = self.__executor.add_node(self.nav.node)
         display_added = self.__executor.add_node(self.display.node)
         led_added = self.__executor.add_node(self.led.node)
         telemetry_added = self.__executor.add_node(self.telemetry.node)
@@ -77,7 +74,7 @@ class RacecarReal(Racecar):
         # own, so it is driven from __update_modules on the run thread.
         assert (
             rate_added and lidar_added and camera_added and controller_added
-            and physics_added and display_added and slam_added and nav_added
+            and physics_added and display_added and slam_added
             and led_added and telemetry_added and vision_added
         ), (
             "Issues initializing Racecar nodes. Node status: \n"
@@ -88,7 +85,6 @@ class RacecarReal(Racecar):
             f"Physics operational: {physics_added} | "
             f"Display operational: {display_added} | "
             f"Slam operational: {slam_added} | "
-            f"Nav operational: {nav_added} | "
             f"Led operational: {led_added} | "
             f"Telemetry operational: {telemetry_added} | "
             f"Vision operational: {vision_added} | "
@@ -123,11 +119,11 @@ class RacecarReal(Racecar):
 
         # Print welcome message
         print(">> Racecar initialization successful")
+        # The NeoRacer's FlySky handset has no START or BACK button.
         print(
             ">> Controls:\n"
-            "    START button = run your program\n"
-            "    BACK button = enter default drive mode\n"
-            "    BACK + START buttons simultaneously = exit the program\n"
+            "    your program starts when go() is called\n"
+            "    CTRL + C in the terminal = exit the program\n"
             "    CTRL + Z on keyboard = force quit the program"
         )
 
@@ -169,18 +165,35 @@ class RacecarReal(Racecar):
             ros2.shutdown()
 
     def go_async(self) -> None:
+        """
+        Start the ROS2 executor in a background thread so the notebook /
+        REPL can interact with rc.* synchronously. Unlike go(), this does
+        NOT install the default trigger-based driving callback — the
+        notebook is the active controller, and a 60 Hz default_update
+        racing on self.drive.__message would clobber every set_speed_angle
+        call with zero (forward_trigger=0, back_trigger=0 → speed=0).
+        """
         self.__running = True
+        # Suppress the run loop's continuous __cur_update calls so they
+        # don't fight the notebook for drive control. Sensor callbacks
+        # still fire from the executor; the run loop's __update_modules
+        # call still services controller edge detection, telemetry, etc.
+        self.__cur_update = self.__noop_update
+        self.__cur_update_slow = None
         self.__async_thread = threading.Thread(target=self.__spin_async, daemon=True)
         self.__async_thread.start()
 
     def __spin_async(self) -> None:
-        if self.__user_start is None or self.__user_update is None:
-            self.__user_start = self.__default_start
-            self.__user_update = self.__default_update
         self.__wait_for_first_scan()
-        self.__handle_start()
+        # The FlySky handset has no START button. A program given to
+        # set_start_update starts at once, as it does under go().
+        if self.__user_start is not None and self.__user_update is not None:
+            self.__handle_start()
         while self.__running:
             self.__executor.spin_once()
+
+    def __noop_update(self):
+        pass
         
     def set_start_update(
         self,
@@ -259,9 +272,8 @@ class RacecarReal(Racecar):
         self.camera._CameraReal__update()
         self.physics._PhysicsReal__update()
         self.lidar._LidarReal__update()
-        self.slam._SlamReal__update()
-        self.nav._NavReal__update()
         self.vision._VisionReal__update()
+        self.slam._SlamReal__update()
         self.telemetry._TelemetryReal__update()
 
     def __default_start(self):
