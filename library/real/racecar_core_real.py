@@ -25,7 +25,6 @@ import display_real
 import drive_real
 import led_real
 import lidar_real
-import nav_real
 import physics_real
 import slam_real
 import telemetry_real
@@ -57,7 +56,6 @@ class RacecarReal(Racecar):
         self.lidar = lidar_real.LidarReal()
         self.physics = physics_real.PhysicsReal()
         self.slam = slam_real.SlamReal()
-        self.nav = nav_real.NavReal()
         self.telemetry = telemetry_real.TelemetryReal()
         self.vision = vision_real.VisionReal()
 
@@ -68,7 +66,6 @@ class RacecarReal(Racecar):
         controller_added = self.__executor.add_node(self.controller.node)
         physics_added = self.__executor.add_node(self.physics.node)
         slam_added = self.__executor.add_node(self.slam.node)
-        nav_added = self.__executor.add_node(self.nav.node)
         display_added = self.__executor.add_node(self.display.node)
         led_added = self.__executor.add_node(self.led.node)
         telemetry_added = self.__executor.add_node(self.telemetry.node)
@@ -77,7 +74,7 @@ class RacecarReal(Racecar):
         # own, so it is driven from __update_modules on the run thread.
         assert (
             rate_added and lidar_added and camera_added and controller_added
-            and physics_added and display_added and slam_added and nav_added
+            and physics_added and display_added and slam_added
             and led_added and telemetry_added and vision_added
         ), (
             "Issues initializing Racecar nodes. Node status: \n"
@@ -88,7 +85,6 @@ class RacecarReal(Racecar):
             f"Physics operational: {physics_added} | "
             f"Display operational: {display_added} | "
             f"Slam operational: {slam_added} | "
-            f"Nav operational: {nav_added} | "
             f"Led operational: {led_added} | "
             f"Telemetry operational: {telemetry_added} | "
             f"Vision operational: {vision_added} | "
@@ -259,7 +255,6 @@ class RacecarReal(Racecar):
         self.camera._CameraReal__update()
         self.physics._PhysicsReal__update()
         self.lidar._LidarReal__update()
-        self.nav._NavReal__update()
         self.vision._VisionReal__update()
         self.slam._SlamReal__update()
         self.telemetry._TelemetryReal__update()

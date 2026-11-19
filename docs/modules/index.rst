@@ -11,7 +11,6 @@ Modules
    drive
    led
    lidar
-   nav
    physics
    slam
    telemetry
