@@ -35,6 +35,22 @@ def test_every_real_node_skips_parameter_services():
     assert found >= 11  # ten modules and racecar_core_real's rate node
 
 
+def class_constant(path, class_name, name):
+    """The literal value a class body in a source file assigns to `name`, or None."""
+    for node in ast.parse(path.read_text()).body:
+        if isinstance(node, ast.ClassDef) and node.name == class_name:
+            for item in node.body:
+                if isinstance(item, ast.AnnAssign):
+                    targets = [item.target]
+                elif isinstance(item, ast.Assign):
+                    targets = item.targets
+                else:
+                    continue
+                if any(isinstance(t, ast.Name) and t.id == name for t in targets):
+                    return ast.literal_eval(item.value)
+    return None
+
+
 def test_drive_defaults_to_full_speed():
     import drive
 
@@ -50,8 +66,7 @@ def test_lidar_sample_counts():
     import lidar
 
     assert lidar.Lidar._NUM_SAMPLES == 1080  # RacecarSim
-    source = (REAL / "lidar_real.py").read_text()
-    assert "_NUM_SAMPLES: int = 1440" in source  # the NeoRacer
+    assert class_constant(REAL / "lidar_real.py", "LidarReal", "_NUM_SAMPLES") == 1440  # the NeoRacer
 
 
 class FakeSim:

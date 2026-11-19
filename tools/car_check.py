@@ -17,12 +17,14 @@ print what each one returns.
 Methodology:
 - Load the library from this clone, ahead of any copy installed on the car.
 - Start the real racecar_core. On the NeoRacer, go() enters the program at once.
-- Show CHECK on the dot matrix, then wait three seconds so every sensor has sent data.
+- Show CHECK on the dot matrix, then wait three seconds so the battery reading arrives.
 - Call each getter once and print its value, or the shape and range of an array.
 - Expect NotImplementedError with its message from the depth, LED, dot matrix pixel
-  and battery current calls, since the NeoRacer has none of that hardware.
+  and battery current calls. The NeoRacer has no depth camera, no LED strip and no
+  current sensor, and its dot matrix takes text only.
 - Count a call as failed when it raises anything else, when the camera or the lidar
-  returns no data, or when the lidar scan is not 1440 samples long.
+  returns no data, when the camera image is not 640 x 480 with three color channels,
+  or when the lidar scan is not 1440 samples long.
 - Clear the dot matrix, print a summary, and exit with status 1 when a call failed.
 
 Expected Outcome: The car does not move. The dot matrix shows CHECK for about
@@ -34,7 +36,9 @@ per call and a summary line, and the program exits on its own.
 - The battery reading has not arrived yet: the voltage line starts with WARN.
 - SLAM is not running: rc.slam reports mode "off", no pose and no map. That is not
   a failure.
-- Ctrl+C before the report: the program exits without a report.
+- A call hangs: the terminal stops after the last line it printed. Press Ctrl+C.
+- Ctrl+C before the summary: the program exits with status 1 and prints no summary.
+  The dot matrix keeps showing CHECK until another program writes to it.
 
 Run it on the car from this folder: python3 car_check.py
 """
@@ -53,12 +57,14 @@ import racecar_utils as rc_utils
 # >> Constants <<
 
 # WAIT_S - seconds of frames before the calls, so the battery reading (every two seconds) arrives
+# IMAGE_SHAPE - the rows, columns and color channels of a NeoRacer camera image
 # LIDAR_SAMPLES - the length of a NeoRacer lidar scan
 # NO_DEPTH - the start of the depth camera NotImplementedError message
 # NO_STRIP - the start of the LED strip NotImplementedError message
 # NO_PIXELS - the start of the dot matrix pixel NotImplementedError message
 # NO_CURRENT - the start of the battery current NotImplementedError message
 WAIT_S = 3.0
+IMAGE_SHAPE = (480, 640, 3)
 LIDAR_SAMPLES = 1440
 NO_DEPTH = "The NeoRacer has no depth camera"
 NO_STRIP = "The NeoRacer has no addressable LED strip"
@@ -122,13 +128,13 @@ Outputs:
 def check(name, call, need_data=False):
     try:
         value = call()
+        if need_data and (value is None or len(value) == 0):
+            report("FAIL", name, f"returned no data ({describe(value)})")
+        else:
+            report("OK", name, describe(value))
     except Exception as error:
         report("FAIL", name, f"raised {type(error).__name__}: {error}")
         return None
-    if need_data and (value is None or len(value) == 0):
-        report("FAIL", name, f"returned no data ({describe(value)})")
-    else:
-        report("OK", name, describe(value))
     return value
 
 
@@ -170,12 +176,21 @@ def run_checks():
     check("rc.get_delta_time()", rc.get_delta_time)
 
     # camera
-    check("rc.camera.get_color_image()", rc.camera.get_color_image, need_data=True)
+    image = check("rc.camera.get_color_image()", rc.camera.get_color_image, need_data=True)
     check("rc.camera.get_color_image_no_copy()", rc.camera.get_color_image_no_copy, need_data=True)
     check("rc.camera.get_color_image_async()", rc.camera.get_color_image_async, need_data=True)
-    check("rc.camera.get_width()", rc.camera.get_width)
-    check("rc.camera.get_height()", rc.camera.get_height)
+    width = check("rc.camera.get_width()", rc.camera.get_width)
+    height = check("rc.camera.get_height()", rc.camera.get_height)
     check("rc.camera.get_max_range()", rc.camera.get_max_range)
+    if image is not None and len(image) > 0:
+        if np.shape(image) == IMAGE_SHAPE and (height, width) == IMAGE_SHAPE[:2]:
+            report("OK", "camera image size", f"{width} x {height}, {IMAGE_SHAPE[2]} color channels")
+        else:
+            report(
+                "FAIL",
+                "camera image size",
+                f"image {np.shape(image)}, get_width() {width}, get_height() {height}",
+            )
     expect_raise("rc.camera.get_depth_image()", rc.camera.get_depth_image, NO_DEPTH)
     expect_raise("rc.camera.get_depth_image_async()", rc.camera.get_depth_image_async, NO_DEPTH)
 
@@ -226,11 +241,15 @@ def run_checks():
     check("rc.physics.get_angular_velocity()", rc.physics.get_angular_velocity)
     check("rc.physics.get_magnetic_field()", rc.physics.get_magnetic_field)
     check("rc.physics.get_encoder_speed()", rc.physics.get_encoder_speed)
-    voltage = rc.physics.get_battery_voltage()
-    if voltage > 0:
-        report("OK", "rc.physics.get_battery_voltage()", describe(voltage))
+    try:
+        voltage = rc.physics.get_battery_voltage()
+    except Exception as error:
+        report("FAIL", "rc.physics.get_battery_voltage()", f"raised {type(error).__name__}: {error}")
     else:
-        report("WARN", "rc.physics.get_battery_voltage()", f"{voltage!r}: no /battery/state reading yet")
+        if voltage > 0:
+            report("OK", "rc.physics.get_battery_voltage()", describe(voltage))
+        else:
+            report("WARN", "rc.physics.get_battery_voltage()", f"{voltage!r}: no /battery/state reading yet")
     expect_raise("rc.physics.get_battery_current()", rc.physics.get_battery_current, NO_CURRENT)
     check("rc.physics.get_rc_channels()", rc.physics.get_rc_channels)
 
@@ -283,7 +302,10 @@ def update():
     if elapsed < WAIT_S:
         return
     reported = True
-    run_checks()
+    try:
+        run_checks()
+    except Exception as error:
+        report("FAIL", "remaining checks", f"skipped after {type(error).__name__}: {error}")
     check("rc.display.clear()", rc.display.clear)
     print(
         f">> {counts['OK']} OK, {counts['RAISES']} raised as expected, "
@@ -302,4 +324,6 @@ def update():
 if __name__ == "__main__":
     rc.set_start_update(start, update)
     rc.go()
-    sys.exit(1 if counts["FAIL"] or not reported else 0)
+    # go() returns only when the program stops before update() exits with the
+    # result, for example on Ctrl+C, so the check did not finish.
+    sys.exit(1)

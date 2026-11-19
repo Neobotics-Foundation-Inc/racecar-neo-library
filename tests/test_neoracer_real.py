@@ -192,7 +192,7 @@ def test_library_nodes_skip_parameter_services(ros, monkeypatch):
 
 
 class FakeExecutor:
-    """Spins go()'s loop; ends it after a set number of spins so a regression fails, not hangs."""
+    """Spins go()'s loop. It ends the loop after a set number of spins, so a regression fails and does not hang."""
 
     def __init__(self, error=None, max_spins=50):
         self.error = error
@@ -203,17 +203,46 @@ class FakeExecutor:
     def spin_once(self, timeout_sec=None):
         if self.error is not None:
             raise self.error
+        self.racecar.lidar.receive()
         self.spins += 1
         if self.spins >= self.max_spins:
             self.racecar._RacecarReal__running = False
 
 
 class FakeLidar:
+    """A lidar whose scan reaches get_samples() on the frame after it arrives."""
+
+    def __init__(self, ready=True):
+        self.incoming = np.ones(1440, dtype=np.float32) if ready else np.empty(0)
+        self.frame = self.incoming
+
+    def receive(self):
+        self.incoming = np.ones(1440, dtype=np.float32)
+
     def get_samples(self):
-        return np.ones(1440, dtype=np.float32)
+        return self.frame
+
+    def get_samples_async(self):
+        return self.incoming
+
+    def _LidarReal__update(self):
+        self.frame = self.incoming
 
 
-def bare_racecar(executor):
+class FakeModule:
+    """Stands in for a library module and records each per-frame update the run loop makes."""
+
+    def __init__(self, name, updated):
+        self.name = name
+        self.updated = updated
+
+    def __getattr__(self, attr):
+        if attr.endswith("__update"):
+            return lambda: self.updated.append(self.name)
+        raise AttributeError(attr)
+
+
+def bare_racecar(executor, scan_ready=True):
     """A RacecarReal with only what go() reads, so no node or thread starts."""
     from racecar_core_real import RacecarReal
 
@@ -222,9 +251,19 @@ def bare_racecar(executor):
     rc._RacecarReal__user_start = None
     rc._RacecarReal__user_update = None
     rc._RacecarReal__user_update_slow = None
-    rc.lidar = FakeLidar()
+    rc.updated = []
+    for name in ("drive", "controller", "camera", "physics", "vision", "slam", "telemetry"):
+        setattr(rc, name, FakeModule(name, rc.updated))
+    rc.lidar = FakeLidar(scan_ready)
     executor.racecar = rc
     return rc
+
+
+def test_run_loop_publishes_drive():
+    # The NeoRacer drive module has no timer, so the run loop's per-frame update publishes /drive.
+    rc = bare_racecar(FakeExecutor())
+    rc._RacecarReal__update_modules()
+    assert "drive" in rc.updated
 
 
 def test_go_enters_the_user_program_without_start(monkeypatch):
@@ -248,15 +287,50 @@ def test_go_enters_the_user_program_without_start(monkeypatch):
     assert rc._RacecarReal__cur_update is update
 
 
+def test_go_waits_for_the_first_scan(monkeypatch):
+    import racecar_core_real
+
+    monkeypatch.setattr(racecar_core_real.ros2, "ok", lambda *a, **k: False)
+    rc = bare_racecar(FakeExecutor(), scan_ready=False)
+    seen = []
+
+    def start():
+        seen.append(len(rc.lidar.get_samples()))
+        rc._RacecarReal__running = False  # end go() after one pass
+
+    rc.set_start_update(start, lambda: None)
+    rc.go()
+    # start() already reads a full scan.
+    assert seen == [1440]
+
+
+def test_go_async_enters_the_user_program_without_start():
+    rc = bare_racecar(FakeExecutor())
+    calls = []
+    rc.set_start_update(lambda: calls.append("start"), lambda: None)
+    rc.go_async()
+    rc._RacecarReal__async_thread.join(timeout=5)
+    # As under go(), the program starts without a START button.
+    assert calls == ["start"]
+
+
 @pytest.mark.parametrize("context_up, shutdowns", [(False, 0), (True, 1)])
-def test_go_returns_on_ctrl_c(monkeypatch, context_up, shutdowns):
+@pytest.mark.parametrize("stop", ["ctrl_c", "external_shutdown"])
+def test_go_returns_on_ctrl_c(monkeypatch, context_up, shutdowns, stop):
     import racecar_core_real
 
     done = []
     monkeypatch.setattr(racecar_core_real.ros2, "ok", lambda *a, **k: context_up)
     monkeypatch.setattr(racecar_core_real.ros2, "shutdown", lambda *a, **k: done.append(1))
-    rc = bare_racecar(FakeExecutor(KeyboardInterrupt()))
+    if stop == "ctrl_c":
+        error = KeyboardInterrupt()
+    else:
+        error = racecar_core_real.ros2.executors.ExternalShutdownException()
+    rc = bare_racecar(FakeExecutor(error))
     rc.set_start_update(lambda: None, lambda: None)
-    rc.go()  # returns instead of raising
-    # rclpy's Ctrl-C handler may have shut the context down already.
+    try:
+        rc.go()  # returns instead of raising
+    except KeyboardInterrupt:
+        pytest.fail("go() let Ctrl+C through instead of returning")
+    # rclpy's Ctrl+C handler may have shut the context down already.
     assert len(done) == shutdowns
