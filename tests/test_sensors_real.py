@@ -109,6 +109,28 @@ def test_camera_decodes_the_neoracer_jpeg_frames(ros):
         stop.set()
 
 
+def test_camera_returns_none_for_a_bad_jpeg_frame(ros, capsys):
+    from sensor_msgs.msg import Image
+
+    cam, pub = camera_with_publisher(ros)
+
+    def bad():
+        return Image(height=48, width=64, encoding="jpeg", step=0, data=b"\xff\xd8 not a jpeg")
+
+    def empty():
+        return Image(height=48, width=64, encoding="jpeg", step=0, data=b"")
+
+    for make in (bad, empty):
+        stop = publish_until_stopped(pub, make)
+        try:
+            assert wait(lambda: cam.get_color_image_async() is None)
+            time.sleep(0.1)
+            assert cam.get_color_image_async() is None
+        finally:
+            stop.set()
+    assert "failed to decode color frame" in capsys.readouterr().out
+
+
 def test_camera_without_frames_returns_none(ros):
     executor, thread = ros
     from camera_real import CameraReal

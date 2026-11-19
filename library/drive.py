@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -72,10 +72,10 @@ class Drive(abc.ABC):
                 RacecarSim.
 
         Note:
-            The NeoRacer starts at a max speed of 1.0 (full scale). The driver's
-            throttle stage and the firmware's closed-loop ceiling still bound the
-            physical speed. RacecarSim starts at a max speed of 0.25. Lower the
-            max speed to slow the whole program down in one place.
+            The NeoRacer starts at a max speed of 1.0 (full scale). A speed of
+            1.0 then commands the driver's top speed, which is 6 m/s in the
+            driver's default settings. RacecarSim starts at a max speed of 0.25.
+            Lower the max speed to slow the whole program down in one place.
 
         Warning:
             The RACECAR contains expensive and fragile equipment.  Please only run
