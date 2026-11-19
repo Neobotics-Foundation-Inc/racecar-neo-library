@@ -128,6 +128,10 @@ def get_data_dir(subfolder: Optional[str] = None) -> str:
         ~/data on the SD card. The RACECAR_DATA_DIR environment variable
         names it; `racecar data` prints it in a terminal.
 
+        On the NeoRacer, the data folder is ~/neoracer_data on the car's NVMe
+        drive. The RACECAR_DATA_DIR environment variable names it, and
+        `racecar data` prints it in a terminal.
+
     Example::
 
         # Save the current camera frame into the car's images folder

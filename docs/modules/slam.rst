@@ -6,7 +6,7 @@ Slam
    rc.slam
 
 Maps are built and loaded with ``racecar map`` on the car or in the map viewer
-(``http://<car>:8084``); ``rc.slam`` reads the car's position on the map, the
+(``http://<car>:8088``); ``rc.slam`` reads the car's position on the map, the
 map itself, and whether the position can be trusted. In RacecarSim the mode is
 always ``"off"``.
 

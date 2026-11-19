@@ -28,6 +28,9 @@ class Led(abc.ABC):
         Until a program sets the LEDs (and again after it exits), the strip
         shows the battery level: red LEDs grow in from both ends of the band.
         In the simulator, the strip is the light band of the car's model.
+
+        The NeoRacer has no LED strip. Every rc.led function raises
+        NotImplementedError there. Use rc.display for the dot matrix instead.
     """
 
     @abc.abstractmethod

@@ -53,6 +53,10 @@ class Racecar(abc.ABC):
         Note:
             go blocks execution until the program exits, when BACK and START are
             pressed together.
+
+            On the NeoRacer, go enters the user program at once, because the
+            FlySky handset has no START button. Press Ctrl-C in the terminal to
+            exit.
         """
         pass
 

@@ -149,6 +149,10 @@ class Physics(abc.ABC):
             --- In the Physical RACECAR ---
             The mean over the last second, from the /battery/state topic.
 
+            On the NeoRacer, the value is the newest reading from the
+            /battery/state topic. The NeoRacer publishes one about every two
+            seconds.
+
         Example::
 
             # voltage stores the battery voltage in volts
@@ -171,6 +175,9 @@ class Physics(abc.ABC):
 
             --- In the Physical RACECAR ---
             The mean over the last second, from the /battery/state topic.
+
+            On the NeoRacer, this function raises NotImplementedError, because
+            the NeoRacer has no current sense.
 
         Example::
 

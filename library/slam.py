@@ -9,7 +9,7 @@ File Name: slam.py
 File Description: Defines the interface of the Slam module of the racecar_core
 library. Reads the car's position on a lidar map from the driver's autonomy
 service, which builds and loads maps (racecar map, or the map viewer on port
-8084).
+8088).
 """
 
 import abc
@@ -137,7 +137,7 @@ class Slam(abc.ABC):
     position can be trusted.
 
     Maps are built and loaded outside the program, with `racecar map` on the
-    car or in the map viewer (http://<car>:8084). While mapping, the car's
+    car or in the map viewer (http://<car>:8088). While mapping, the car's
     position is on the map being built; while localizing, it is on the loaded
     map. With the autonomy service stopped the mode is "off" and there is no
     pose or map.

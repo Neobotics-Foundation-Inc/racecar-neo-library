@@ -22,7 +22,8 @@ import racecar_utils as rc_utils
 class Display(abc.ABC):
     """
     Shows images in a window on the computer running the program, and controls
-    the 8x24 dot matrix display on the car.
+    the 8x24 dot matrix display on the car. The NeoRacer's dot matrix is an 8x8
+    panel that shows text only.
     """
 
     # The radii dots used to indicate points
@@ -224,6 +225,9 @@ class Display(abc.ABC):
             The pattern stays until the program replaces it or exits. The matrix
             appears in a panel on screen when "Show dot matrix" is on in Settings.
 
+            On the NeoRacer, this function raises NotImplementedError, because
+            the NeoRacer's 8x8 panel takes text only. Use show_text() instead.
+
         Example::
 
             dot_matrix = np.ones((8, 24), dtype=np.uint8)
@@ -250,6 +254,9 @@ class Display(abc.ABC):
         Note:
             On the physical RACECAR and in RacecarSim, scroll_speed is not used:
             text wider than the display scrolls across it once every 4 seconds.
+
+            On the NeoRacer, scroll_speed is not used either. The panel scrolls
+            text that is wider than the panel on its own.
 
         Example::
 
@@ -285,6 +292,9 @@ class Display(abc.ABC):
         Note:
             Returns the matrix last passed to set_matrix; a nonzero value is an
             LED that is on. Text shown with show_text is not included.
+
+            On the NeoRacer, this function raises NotImplementedError, because
+            the NeoRacer's 8x8 panel takes text only. Use show_text() instead.
 
         Example::
 
@@ -323,6 +333,9 @@ class Display(abc.ABC):
             On the physical RACECAR and in RacecarSim this function has no effect:
             the matrix contrast is fixed by the car's dot matrix driver. The first
             call prints a warning.
+
+            On the NeoRacer, this function raises NotImplementedError, because
+            the NeoRacer's 8x8 panel takes text only. Use show_text() instead.
 
         Example::
 
