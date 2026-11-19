@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -13,8 +13,8 @@ from lidar import Lidar
 
 # General
 import numpy as np
-class NDArray:  # inline stub; nptyping is deliberately not a dependency
-    def __class_getitem__(cls, item): return cls
+class NDArray:  # stub - no runtime dependency on nptyping
+    def __class_getitem__(cls, _): return cls
 
 # ROS2
 import rclpy as ros2

@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -14,8 +14,8 @@ from camera import Camera
 # General
 import cv2 as cv
 import numpy as np
-class NDArray:  # inline stub; nptyping is deliberately not a dependency
-    def __class_getitem__(cls, item): return cls
+class NDArray:  # stub - no runtime dependency on nptyping
+    def __class_getitem__(cls, _): return cls
 
 import threading
 import time
@@ -111,7 +111,10 @@ class CameraReal(Camera):
         # buffer with encoding 'jpeg', so OpenCV decodes that frame here.
         # cv_bridge decodes any other encoding, as on the racecar_neo platform.
         if msg.encoding == self.__JPEG_ENCODING:
-            image = cv.imdecode(np.frombuffer(msg.data, np.uint8), cv.IMREAD_COLOR)
+            # cv.imdecode raises on an empty buffer and returns None on bad data.
+            image = None
+            if len(msg.data) > 0:
+                image = cv.imdecode(np.frombuffer(msg.data, np.uint8), cv.IMREAD_COLOR)
             if image is None:
                 print("camera_real: failed to decode color frame: invalid JPEG data")
             return image

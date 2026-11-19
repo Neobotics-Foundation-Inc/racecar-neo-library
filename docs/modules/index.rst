@@ -14,5 +14,5 @@ Modules
    physics
    slam
    telemetry
-   vision
    utils
+   vision

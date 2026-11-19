@@ -2,8 +2,8 @@ import struct
 
 import numpy as np
 import cv2 as cv
-class NDArray:  # inline stub; nptyping is deliberately not a dependency
-    def __class_getitem__(cls, item): return cls
+class NDArray:  # stub - no runtime dependency on nptyping
+    def __class_getitem__(cls, _): return cls
 
 from display import Display
 
