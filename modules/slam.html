@@ -26,7 +26,7 @@
 <meta content="Slam | racecar-neo-library  documentation" name="twitter:title"/>
 <link href="../_static/pygments.css?v=0a3749eb" rel="stylesheet" type="text/css"/>
 <link href="../_static/pygments_dark.css" id="pygments_dark_css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css"/>
-<link href="../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=009055c6" rel="stylesheet" type="text/css"/>
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
 <link href="telemetry.html" rel="next" title="Telemetry"/>
@@ -81,12 +81,11 @@
 <li class="toctree-l2"><a class="reference internal" href="drive.html">Drive</a></li>
 <li class="toctree-l2"><a class="reference internal" href="led.html">Led</a></li>
 <li class="toctree-l2"><a class="reference internal" href="lidar.html">Lidar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nav.html">Nav</a></li>
 <li class="toctree-l2"><a class="reference internal" href="physics.html">Physics</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Slam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
-<li class="toctree-l2"><a class="reference internal" href="vision.html">Vision</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vision.html">Vision</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../guides/index.html">Guides<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -121,126 +120,309 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">rc</span><span class="o">.</span><span class="n">slam</span>
 </span></code></pre></div>
 </div>
+<p>Maps are built and loaded with <code class="docutils literal notranslate"><span class="pre">racecar</span> <span class="pre">map</span></code> on the car or in the map viewer
+(<code class="docutils literal notranslate"><span class="pre">http://&lt;car&gt;:8088</span></code>); <code class="docutils literal notranslate"><span class="pre">rc.slam</span></code> reads the car’s position on the map, the
+map itself, and whether the position can be trusted. In RacecarSim the mode is
+always <code class="docutils literal notranslate"><span class="pre">"off"</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">():</span>
+</span><span id="line-2">    <span class="k">if</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">is_localized</span><span class="p">():</span>
+</span><span id="line-3">        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">heading</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_pose</span><span class="p">()</span>        <span class="c1"># meters, meters, degrees</span>
+</span><span id="line-4">        <span class="n">m</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_map</span><span class="p">()</span>
+</span><span id="line-5">        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">value_at</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">100</span><span class="p">:</span>         <span class="c1"># wall 0.5 m along the map's x axis</span>
+</span><span id="line-6">            <span class="n">rc</span><span class="o">.</span><span class="n">drive</span><span class="o">.</span><span class="n">set_speed_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
 <p id="module-slam">Copyright MIT
-MIT License</p>
+GNU General Public License v3.0</p>
 <p>BWSI Autonomous RACECAR Course
 Racecar Neo LTS</p>
 <p>File Name: slam.py
-File Description: Defines the interface for the Slam module of the racecar_core library.</p>
+File Description: Defines the interface of the Slam module of the racecar_core
+library. Reads the car’s position on a lidar map from the driver’s autonomy
+service, which builds and loads maps (racecar map, or the map viewer on port
+8088).</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="slam.Slam">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">slam.</span></span><span class="sig-name descname"><span class="pre">Slam</span></span><a class="headerlink" href="#slam.Slam" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam'"><span>#</span></a></dt>
-<dd><p>Builds and localizes against an occupancy-grid map of the car’s surroundings.</p>
-<p>The same interface is available in simulation and on the physical car, so a
-single mapping or navigation program runs unchanged in both. On the real car
-it is backed by slam_toolbox; in the simulator by the in-browser SLAM core.</p>
+<dt class="sig sig-object py" id="slam.OccupancyMap">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">slam.</span></span><span class="sig-name descname"><span class="pre">OccupancyMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#slam.OccupancyMap" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap'"><span>#</span></a></dt>
+<dd><p>A 2D occupancy grid of the space around the car.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="slam.OccupancyMap.width">
+<span class="sig-name descname"><span class="pre">width</span></span><a class="headerlink" href="#slam.OccupancyMap.width" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap.width'"><span>#</span></a></dt>
+<dd><p>Number of columns.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="slam.OccupancyMap.height">
+<span class="sig-name descname"><span class="pre">height</span></span><a class="headerlink" href="#slam.OccupancyMap.height" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap.height'"><span>#</span></a></dt>
+<dd><p>Number of rows.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="slam.OccupancyMap.resolution">
+<span class="sig-name descname"><span class="pre">resolution</span></span><a class="headerlink" href="#slam.OccupancyMap.resolution" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap.resolution'"><span>#</span></a></dt>
+<dd><p>Size of one cell in meters (0.05 by default).</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="slam.OccupancyMap.origin">
+<span class="sig-name descname"><span class="pre">origin</span></span><a class="headerlink" href="#slam.OccupancyMap.origin" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap.origin'"><span>#</span></a></dt>
+<dd><p>(x, y) in meters of the lower-left corner of cell (0, 0) in the
+map frame.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="slam.OccupancyMap.data">
+<span class="sig-name descname"><span class="pre">data</span></span><a class="headerlink" href="#slam.OccupancyMap.data" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap.data'"><span>#</span></a></dt>
+<dd><p>int8 array of shape (height, width): -1 unknown, 0 free, and 100
+wall. Row 0 is at the bottom, so the row index grows with y and the
+column index with x.</p>
+</dd></dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To plot the map the right way up with matplotlib, pass origin=”lower”:
+plt.imshow(m.data, origin=”lower”).</p>
+</div>
 <dl class="py method">
-<dt class="sig sig-object py" id="slam.Slam.get_map">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_map</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#slam.Slam.get_map" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.get_map'"><span>#</span></a></dt>
-<dd><p>Returns the current occupancy grid.</p>
+<dt class="sig sig-object py" id="slam.OccupancyMap.to_cell">
+<span class="sig-name descname"><span class="pre">to_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#slam.OccupancyMap.to_cell" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap.to_cell'"><span>#</span></a></dt>
+<dd><p>Returns the cell that holds a point of the map.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A tuple (width, height, cell_size_m, grid), where grid is a row-major
-list of occupancy values: -1 unknown, 0 free, and 100 occupied.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Map x in meters.</p></li>
+<li><p><strong>y</strong> – Map y in meters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(row, col) of the cell, or None when the point is off the map.</p>
 </dd>
 </dl>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">cell_m</span><span class="p">,</span> <span class="n">grid</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_map</span><span class="p">()</span>
-</span><span id="line-2">
-</span><span id="line-3"><span class="c1"># Occupancy of the cell at grid column col, row row</span>
-</span><span id="line-4"><span class="n">value</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">m</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_map</span><span class="p">()</span>
+</span><span id="line-2"><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">heading</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_pose</span><span class="p">()</span>
+</span><span id="line-3"><span class="n">cell</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">to_cell</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="slam.OccupancyMap.to_point">
+<span class="sig-name descname"><span class="pre">to_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#slam.OccupancyMap.to_point" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap.to_point'"><span>#</span></a></dt>
+<dd><p>Returns the map position of a cell’s center.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>row</strong> – Row index; 0 is the bottom row.</p></li>
+<li><p><strong>col</strong> – Column index; 0 is the left column.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(x, y) in meters in the map frame.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="slam.OccupancyMap.value_at">
+<span class="sig-name descname"><span class="pre">value_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#slam.OccupancyMap.value_at" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.OccupancyMap.value_at'"><span>#</span></a></dt>
+<dd><p>Returns the occupancy at a point of the map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Map x in meters.</p></li>
+<li><p><strong>y</strong> – Map y in meters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>100 for a wall, 0 for free space, and -1 for unknown space or a
+point off the map.</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># True if there is a wall 1 m along the map's x axis from the car</span>
+</span><span id="line-2"><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">heading</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_pose</span><span class="p">()</span>
+</span><span id="line-3"><span class="n">wall_ahead</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_map</span><span class="p">()</span><span class="o">.</span><span class="n">value_at</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">100</span>
+</span></code></pre></div>
+</div>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="slam.Slam">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">slam.</span></span><span class="sig-name descname"><span class="pre">Slam</span></span><a class="headerlink" href="#slam.Slam" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam'"><span>#</span></a></dt>
+<dd><p>Reads the car’s position on a lidar map, the map itself, and whether the
+position can be trusted.</p>
+<p>Maps are built and loaded outside the program, with <cite>racecar map</cite> on the
+car or in the map viewer (<a class="reference external" href="http:/">http:/</a>/&lt;car&gt;:8088). While mapping, the car’s
+position is on the map being built; while localizing, it is on the loaded
+map. With the autonomy service stopped the mode is “off” and there is no
+pose or map.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="slam.Slam.get_map">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_map</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#slam.OccupancyMap" title="slam.OccupancyMap"><span class="pre">OccupancyMap</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#slam.Slam.get_map" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.get_map'"><span>#</span></a></dt>
+<dd><p>Returns the newest map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An OccupancyMap, or None when the mode is “off” or no map has arrived
+yet. While mapping it grows about every 5 seconds; while localizing
+it does not change.</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">m</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_map</span><span class="p">()</span>
+</span><span id="line-2"><span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-3">    <span class="n">walls</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="slam.Slam.get_map_name">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_map_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#slam.Slam.get_map_name" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.get_map_name'"><span>#</span></a></dt>
+<dd><p>Returns the name of the map being built or used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The map name, or “” when the mode is “off”.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="slam.Slam.get_mode">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#slam.Slam.get_mode" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.get_mode'"><span>#</span></a></dt>
+<dd><p>Returns what the autonomy service is doing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>“mapping”, “localization”, or “off”.</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">if</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_mode</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"off"</span><span class="p">:</span>
+</span><span id="line-2">    <span class="nb">print</span><span class="p">(</span><span class="s2">"Load a map in the map viewer first"</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="slam.Slam.get_pose">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_pose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#slam.Slam.get_pose" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.get_pose'"><span>#</span></a></dt>
-<dd><p>Returns the car’s current pose within the map.</p>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_pose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#slam.Slam.get_pose" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.get_pose'"><span>#</span></a></dt>
+<dd><p>Returns the car’s position and heading on the map.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The (x, y, heading) pose in meters and radians.</p>
+<dd class="field-odd"><p>x and y in meters in the map frame, heading in
+degrees counterclockwise from the map’s x axis, in [-180, 180).
+None when the mode is “off” or no pose has arrived yet.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>(x, y, heading)</p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The position is the point on the floor under the middle of the rear
+axle. Check is_localized() before relying on it.</p>
+</div>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">heading</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_pose</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">pose</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_pose</span><span class="p">()</span>
+</span><span id="line-2"><span class="k">if</span> <span class="n">pose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-3">    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">heading</span> <span class="o">=</span> <span class="n">pose</span>
 </span></code></pre></div>
 </div>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="slam.Slam.load_map">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#slam.Slam.load_map" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.load_map'"><span>#</span></a></dt>
-<dd><p>Loads a previously saved map.</p>
+<dt class="sig sig-object py" id="slam.Slam.get_pose_async">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_pose_async</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#slam.Slam.get_pose_async" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.get_pose_async'"><span>#</span></a></dt>
+<dd><p>Returns the car’s position and heading without the car in “go” mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>True if a map named name was found and loaded, False otherwise.</p>
+<dd class="field-odd"><p>The same as get_pose(), read from the newest message rather than
+once per frame.</p>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This function breaks the start-update paradigm and should only be
+used in Jupyter Notebook.</p>
+</div>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="slam.Slam.get_save_status">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_save_status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#slam.Slam.get_save_status" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.get_save_status'"><span>#</span></a></dt>
+<dd><p>Returns the result of the last save_map() call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>“” before any save, “saving” while it runs, “saved” when the files
+are written, or “failed: &lt;reason&gt;”.</p>
 </dd>
 </dl>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">if</span> <span class="ow">not</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">load_map</span><span class="p">(</span><span class="s2">"my_track"</span><span class="p">):</span>
-</span><span id="line-2">    <span class="nb">print</span><span class="p">(</span><span class="s2">"No saved map found; run the mapping program first."</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">status</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_save_status</span><span class="p">()</span>
+</span><span id="line-2"><span class="k">if</span> <span class="n">status</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"failed"</span><span class="p">):</span>
+</span><span id="line-3">    <span class="nb">print</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="slam.Slam.reset">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#slam.Slam.reset" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.reset'"><span>#</span></a></dt>
-<dd><p>Clears the map and pose so the next scan starts a fresh map.</p>
+<dt class="sig sig-object py" id="slam.Slam.is_localized">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">is_localized</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#slam.Slam.is_localized" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.is_localized'"><span>#</span></a></dt>
+<dd><p>Returns whether the car’s pose can be trusted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True while mapping with the lidar running, or while localizing with
+a tight pose estimate whose lidar scan fits the map. False when the
+mode is “off”.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A car that is picked up and set down elsewhere reads False within a
+few seconds, and stays False until its position is found again (Set
+pose or Find me in the map viewer, then drive slowly).</p>
+</div>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">if</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">is_localized</span><span class="p">():</span>
+</span><span id="line-2">    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">heading</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">get_pose</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="slam.Slam.save_map">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">save_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#slam.Slam.save_map" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.save_map'"><span>#</span></a></dt>
-<dd><p>Saves the current map under name so it can be reloaded later.</p>
-<p>Real hardware writes the map into ~/.neoracer/maps.</p>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># After driving manually around the track</span>
-</span><span id="line-2"><span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">save_map</span><span class="p">(</span><span class="s2">"my_track"</span><span class="p">)</span>
-</span></code></pre></div>
-</div>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="slam.Slam.update">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scan</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#slam.Slam.update" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.update'"><span>#</span></a></dt>
-<dd><p>Folds the latest LIDAR scan into the map and returns the corrected pose.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>scan</strong> – The current LIDAR scan in cm, as returned by
-rc.lidar.get_samples().</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The corrected (x, y, heading) pose in meters and radians, with heading
-normalized to the range [-pi, pi].</p>
-</dd>
-</dl>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">save_map</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#slam.Slam.save_map" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.Slam.save_map'"><span>#</span></a></dt>
+<dd><p>Saves the map being built; returns at once.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>On the physical car the SLAM backend ingests the LIDAR stream
-directly, so scan is accepted for simulator parity but the map
-advances on its own; the call still returns the latest pose.</p>
+<p>Only while mapping. Follow the result with get_save_status(). The
+map is also saved every 60 seconds and when mapping stops.</p>
 </div>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">scan</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">lidar</span><span class="o">.</span><span class="n">get_samples</span><span class="p">()</span>
-</span><span id="line-2"><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">heading</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">scan</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="k">if</span> <span class="n">rc</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">was_pressed</span><span class="p">(</span><span class="n">rc</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">Button</span><span class="o">.</span><span class="n">A</span><span class="p">):</span>
+</span><span id="line-2">    <span class="n">rc</span><span class="o">.</span><span class="n">slam</span><span class="o">.</span><span class="n">save_map</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
 </dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="slam.heading_degrees">
+<span class="sig-prename descclassname"><span class="pre">slam.</span></span><span class="sig-name descname"><span class="pre">heading_degrees</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#slam.heading_degrees" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#slam.heading_degrees'"><span>#</span></a></dt>
+<dd><p>Return the heading of a planar quaternion in degrees, in [-180, 180).</p>
 </dd></dl>
 </section>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
-<li><a :data-current="activeSection === '#slam.Slam'" class="reference internal" href="#slam.Slam"><code class="docutils literal notranslate"><span class="pre">Slam</span></code></a><ul>
-<li><a :data-current="activeSection === '#slam.Slam.get_map'" class="reference internal" href="#slam.Slam.get_map"><code class="docutils literal notranslate"><span class="pre">Slam.get_map()</span></code></a></li>
-<li><a :data-current="activeSection === '#slam.Slam.get_pose'" class="reference internal" href="#slam.Slam.get_pose"><code class="docutils literal notranslate"><span class="pre">Slam.get_pose()</span></code></a></li>
-<li><a :data-current="activeSection === '#slam.Slam.load_map'" class="reference internal" href="#slam.Slam.load_map"><code class="docutils literal notranslate"><span class="pre">Slam.load_map()</span></code></a></li>
-<li><a :data-current="activeSection === '#slam.Slam.reset'" class="reference internal" href="#slam.Slam.reset"><code class="docutils literal notranslate"><span class="pre">Slam.reset()</span></code></a></li>
-<li><a :data-current="activeSection === '#slam.Slam.save_map'" class="reference internal" href="#slam.Slam.save_map"><code class="docutils literal notranslate"><span class="pre">Slam.save_map()</span></code></a></li>
-<li><a :data-current="activeSection === '#slam.Slam.update'" class="reference internal" href="#slam.Slam.update"><code class="docutils literal notranslate"><span class="pre">Slam.update()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.OccupancyMap'" class="reference internal" href="#slam.OccupancyMap"><code class="docutils literal notranslate"><span class="pre">OccupancyMap</span></code></a><ul>
+<li><a :data-current="activeSection === '#slam.OccupancyMap.width'" class="reference internal" href="#slam.OccupancyMap.width"><code class="docutils literal notranslate"><span class="pre">OccupancyMap.width</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.OccupancyMap.height'" class="reference internal" href="#slam.OccupancyMap.height"><code class="docutils literal notranslate"><span class="pre">OccupancyMap.height</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.OccupancyMap.resolution'" class="reference internal" href="#slam.OccupancyMap.resolution"><code class="docutils literal notranslate"><span class="pre">OccupancyMap.resolution</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.OccupancyMap.origin'" class="reference internal" href="#slam.OccupancyMap.origin"><code class="docutils literal notranslate"><span class="pre">OccupancyMap.origin</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.OccupancyMap.data'" class="reference internal" href="#slam.OccupancyMap.data"><code class="docutils literal notranslate"><span class="pre">OccupancyMap.data</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.OccupancyMap.to_cell'" class="reference internal" href="#slam.OccupancyMap.to_cell"><code class="docutils literal notranslate"><span class="pre">OccupancyMap.to_cell()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.OccupancyMap.to_point'" class="reference internal" href="#slam.OccupancyMap.to_point"><code class="docutils literal notranslate"><span class="pre">OccupancyMap.to_point()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.OccupancyMap.value_at'" class="reference internal" href="#slam.OccupancyMap.value_at"><code class="docutils literal notranslate"><span class="pre">OccupancyMap.value_at()</span></code></a></li>
 </ul>
 </li>
+<li><a :data-current="activeSection === '#slam.Slam'" class="reference internal" href="#slam.Slam"><code class="docutils literal notranslate"><span class="pre">Slam</span></code></a><ul>
+<li><a :data-current="activeSection === '#slam.Slam.get_map'" class="reference internal" href="#slam.Slam.get_map"><code class="docutils literal notranslate"><span class="pre">Slam.get_map()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.Slam.get_map_name'" class="reference internal" href="#slam.Slam.get_map_name"><code class="docutils literal notranslate"><span class="pre">Slam.get_map_name()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.Slam.get_mode'" class="reference internal" href="#slam.Slam.get_mode"><code class="docutils literal notranslate"><span class="pre">Slam.get_mode()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.Slam.get_pose'" class="reference internal" href="#slam.Slam.get_pose"><code class="docutils literal notranslate"><span class="pre">Slam.get_pose()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.Slam.get_pose_async'" class="reference internal" href="#slam.Slam.get_pose_async"><code class="docutils literal notranslate"><span class="pre">Slam.get_pose_async()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.Slam.get_save_status'" class="reference internal" href="#slam.Slam.get_save_status"><code class="docutils literal notranslate"><span class="pre">Slam.get_save_status()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.Slam.is_localized'" class="reference internal" href="#slam.Slam.is_localized"><code class="docutils literal notranslate"><span class="pre">Slam.is_localized()</span></code></a></li>
+<li><a :data-current="activeSection === '#slam.Slam.save_map'" class="reference internal" href="#slam.Slam.save_map"><code class="docutils literal notranslate"><span class="pre">Slam.save_map()</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#slam.heading_degrees'" class="reference internal" href="#slam.heading_degrees"><code class="docutils literal notranslate"><span class="pre">heading_degrees()</span></code></a></li>
 </ul>
 </div>
 </aside>
@@ -249,7 +431,7 @@ advances on its own; the call still returns the latest pose.</p>
 </div><footer class="py-6 border-t border-border md:py-0">
 <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
 <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2024, MIT. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.0.4</a></p>
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2024-2026, MIT. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.0.4</a></p>
 </div>
 </div>
 </footer>
@@ -257,6 +439,6 @@ advances on its own; the call still returns the latest pose.</p>
 <script src="../_static/documentation_options.js?v=5929fcd5"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-<script defer="defer" src="../_static/theme.js?v=5db23cf8"></script>
+<script defer="defer" src="../_static/theme.js?v=49cc6205"></script>
 </body>
 </html>

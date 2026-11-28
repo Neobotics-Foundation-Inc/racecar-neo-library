@@ -26,10 +26,10 @@
 <meta content="Lidar | racecar-neo-library  documentation" name="twitter:title"/>
 <link href="../_static/pygments.css?v=0a3749eb" rel="stylesheet" type="text/css"/>
 <link href="../_static/pygments_dark.css" id="pygments_dark_css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css"/>
-<link href="../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=009055c6" rel="stylesheet" type="text/css"/>
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
-<link href="nav.html" rel="next" title="Nav"/>
+<link href="physics.html" rel="next" title="Physics"/>
 <link href="led.html" rel="prev" title="Led"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
@@ -81,12 +81,11 @@
 <li class="toctree-l2"><a class="reference internal" href="drive.html">Drive</a></li>
 <li class="toctree-l2"><a class="reference internal" href="led.html">Led</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Lidar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nav.html">Nav</a></li>
 <li class="toctree-l2"><a class="reference internal" href="physics.html">Physics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="slam.html">Slam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
-<li class="toctree-l2"><a class="reference internal" href="vision.html">Vision</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vision.html">Vision</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../guides/index.html">Guides<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -122,7 +121,7 @@
 </span></code></pre></div>
 </div>
 <p id="module-lidar">Copyright MIT
-MIT License</p>
+GNU General Public License v3.0</p>
 <p>BWSI Autonomous RACECAR Course
 Racecar Neo LTS</p>
 <p>File Name: lidar.py
@@ -137,7 +136,7 @@ File Description: Defines the interface for the Lidar module of the racecar_core
 <dd><p>Returns the number of samples in a full LIDAR scan.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>720 in the
+<dd class="field-odd"><p>1080 in the
 simulator, 1440 on the NeoRacer.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -167,7 +166,7 @@ the rear ~90 degree wedge always reads 0.</p>
 <p class="admonition-title">Note</p>
 <p>Samples are in clockwise order, with the 0th sample directly in front of the
 car.  Each sample is an equal angle apart, but the sample count differs by
-platform (720 in the simulator, ~1440 on the NeoRacer), so index relative
+platform (1080 in the simulator, ~1440 on the NeoRacer), so index relative
 to len(scan) rather than a fixed number.</p>
 </div>
 <p>Example:</p>
@@ -206,7 +205,7 @@ Jupyter Notebook.</p>
 </span><span id="line-2"><span class="n">scan</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">lidar</span><span class="o">.</span><span class="n">get_samples_async</span><span class="p">()</span>
 </span><span id="line-3">
 </span><span id="line-4"><span class="c1"># Get the distance of the measurement directly in front of the car</span>
-</span><span id="line-5"><span class="n">forward_distance</span> <span class="o">=</span> <span class="n">lidar_ranges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-5"><span class="n">forward_distance</span> <span class="o">=</span> <span class="n">scan</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span></code></pre></div>
 </div>
 </dd></dl>
@@ -229,7 +228,7 @@ Jupyter Notebook.</p>
 </div><footer class="py-6 border-t border-border md:py-0">
 <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
 <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2024, MIT. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.0.4</a></p>
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2024-2026, MIT. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.0.4</a></p>
 </div>
 </div>
 </footer>
@@ -237,6 +236,6 @@ Jupyter Notebook.</p>
 <script src="../_static/documentation_options.js?v=5929fcd5"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-<script defer="defer" src="../_static/theme.js?v=5db23cf8"></script>
+<script defer="defer" src="../_static/theme.js?v=49cc6205"></script>
 </body>
 </html>

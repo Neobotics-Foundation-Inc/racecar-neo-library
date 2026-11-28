@@ -26,7 +26,7 @@
 <meta content="Camera | racecar-neo-library  documentation" name="twitter:title"/>
 <link href="../_static/pygments.css?v=0a3749eb" rel="stylesheet" type="text/css"/>
 <link href="../_static/pygments_dark.css" id="pygments_dark_css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css"/>
-<link href="../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=009055c6" rel="stylesheet" type="text/css"/>
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
 <link href="controller.html" rel="next" title="Controller"/>
@@ -81,12 +81,11 @@
 <li class="toctree-l2"><a class="reference internal" href="drive.html">Drive</a></li>
 <li class="toctree-l2"><a class="reference internal" href="led.html">Led</a></li>
 <li class="toctree-l2"><a class="reference internal" href="lidar.html">Lidar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nav.html">Nav</a></li>
 <li class="toctree-l2"><a class="reference internal" href="physics.html">Physics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="slam.html">Slam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
-<li class="toctree-l2"><a class="reference internal" href="vision.html">Vision</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vision.html">Vision</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../guides/index.html">Guides<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -122,7 +121,7 @@
 </span></code></pre></div>
 </div>
 <p id="module-camera">Copyright MIT
-MIT License</p>
+GNU General Public License v3.0</p>
 <p>BWSI Autonomous RACECAR Course
 Racecar Neo LTS</p>
 <p>File Name: camera.py
@@ -251,6 +250,11 @@ captured image, and is therefore more efficient.</p>
 the distance of each pixel from the car in cm.</p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>On the NeoRacer, this function raises NotImplementedError, because
+the NeoRacer has no depth camera. Use rc.lidar for range data.</p>
+</div>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># Initialize image with the most recent depth image captured by the camera</span>
 </span><span id="line-2"><span class="n">image</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">get_depth_image</span><span class="p">()</span>
@@ -270,6 +274,11 @@ the distance of each pixel from the car in cm.</p>
 the distance of each pixel from the car in cm.</p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>On the NeoRacer, this function raises NotImplementedError, because
+the NeoRacer has no depth camera. Use rc.lidar for range data.</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This function breaks the start-update paradigm and should only be used in
@@ -361,7 +370,7 @@ Jupyter Notebook.</p>
 </div><footer class="py-6 border-t border-border md:py-0">
 <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
 <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2024, MIT. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.0.4</a></p>
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2024-2026, MIT. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.0.4</a></p>
 </div>
 </div>
 </footer>
@@ -369,6 +378,6 @@ Jupyter Notebook.</p>
 <script src="../_static/documentation_options.js?v=5929fcd5"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-<script defer="defer" src="../_static/theme.js?v=5db23cf8"></script>
+<script defer="defer" src="../_static/theme.js?v=49cc6205"></script>
 </body>
 </html>

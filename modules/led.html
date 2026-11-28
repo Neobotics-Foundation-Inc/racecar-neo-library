@@ -26,7 +26,7 @@
 <meta content="Led | racecar-neo-library  documentation" name="twitter:title"/>
 <link href="../_static/pygments.css?v=0a3749eb" rel="stylesheet" type="text/css"/>
 <link href="../_static/pygments_dark.css" id="pygments_dark_css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css"/>
-<link href="../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=009055c6" rel="stylesheet" type="text/css"/>
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
 <link href="lidar.html" rel="next" title="Lidar"/>
@@ -81,12 +81,11 @@
 <li class="toctree-l2"><a class="reference internal" href="drive.html">Drive</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Led</a></li>
 <li class="toctree-l2"><a class="reference internal" href="lidar.html">Lidar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nav.html">Nav</a></li>
 <li class="toctree-l2"><a class="reference internal" href="physics.html">Physics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="slam.html">Slam</a></li>
 <li class="toctree-l2"><a class="reference internal" href="telemetry.html">Telemetry</a></li>
-<li class="toctree-l2"><a class="reference internal" href="vision.html">Vision</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vision.html">Vision</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../guides/index.html">Guides<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -130,9 +129,19 @@ File Description: Defines the interface of the Led module of the racecar_core li
 <dl class="py class">
 <dt class="sig sig-object py" id="led.Led">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">led.</span></span><span class="sig-name descname"><span class="pre">Led</span></span><a class="headerlink" href="#led.Led" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#led.Led'"><span>#</span></a></dt>
-<dd><p>Controls the addressable RGB LED strip on the NEO-PIT board.</p>
+<dd><p>Controls the 84-LED addressable RGB strip in the light band around the car.</p>
 <p>Each LED is individually controllable. Colors are (red, green, blue)
-tuples with each channel in the range [0, 255].</p>
+tuples with each channel in the range [0, 255]. LED 0 is at the front-left
+end of the band; the index runs back along the left side, around the rear,
+and forward along the right side to LED 83 at the front-right end.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Until a program sets the LEDs (and again after it exits), the strip
+shows the battery level: red LEDs grow in from both ends of the band.
+In the simulator, the strip is the light band of the car’s model.</p>
+<p>The NeoRacer has no LED strip. Every rc.led function raises
+NotImplementedError there. Use rc.display for the dot matrix instead.</p>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="led.Led.clear">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#led.Led.clear" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#led.Led.clear'"><span>#</span></a></dt>
@@ -155,6 +164,18 @@ tuples with each channel in the range [0, 255].</p>
 <dt class="sig sig-object py" id="led.Led.get_pixels">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_pixels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#led.Led.get_pixels" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#led.Led.get_pixels'"><span>#</span></a></dt>
 <dd><p>Returns the current color of every LED as a list of (r, g, b) tuples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>One (red, green, blue) tuple per LED, from LED 0 to LED 83, as last
+set by the program.</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># Shift the strip pattern one LED along the band</span>
+</span><span id="line-2"><span class="n">pixels</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">get_pixels</span><span class="p">()</span>
+</span><span id="line-3"><span class="n">rc</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">set_pixels</span><span class="p">(</span><span class="n">pixels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">pixels</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+</span></code></pre></div>
+</div>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="led.Led.set_color">
@@ -181,6 +202,9 @@ tuples with each channel in the range [0, 255].</p>
 <li><p><strong>index</strong> – The LED to set, from 0 to get_num_pixels() - 1.</p></li>
 <li><p><strong>color</strong> – An (red, green, blue) tuple, each channel in [0, 255].</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>IndexError</strong> – If index is outside [0, get_num_pixels() - 1].</p>
 </dd>
 </dl>
 <p>Example:</p>
@@ -228,7 +252,7 @@ ignored; missing entries are left unchanged.</p>
 </div><footer class="py-6 border-t border-border md:py-0">
 <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
 <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2024, MIT. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.0.4</a></p>
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2024-2026, MIT. Built with <a class="font-medium underline underline-offset-4" href="https://www.sphinx-doc.org" rel="noreferrer">Sphinx 9.0.4</a></p>
 </div>
 </div>
 </footer>
@@ -236,6 +260,6 @@ ignored; missing entries are left unchanged.</p>
 <script src="../_static/documentation_options.js?v=5929fcd5"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-<script defer="defer" src="../_static/theme.js?v=5db23cf8"></script>
+<script defer="defer" src="../_static/theme.js?v=49cc6205"></script>
 </body>
 </html>
