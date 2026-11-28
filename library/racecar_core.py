@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -19,7 +19,6 @@ import display
 import drive
 import led
 import lidar
-import nav
 import physics
 import slam
 import telemetry
@@ -41,7 +40,6 @@ class Racecar(abc.ABC):
         self.drive: drive.Drive
         self.led: led.Led
         self.lidar: lidar.Lidar
-        self.nav: nav.Nav
         self.physics: physics.Physics
         self.slam: slam.Slam
         self.telemetry: telemetry.Telemetry
@@ -53,8 +51,12 @@ class Racecar(abc.ABC):
         Starts the RACECAR, beginning in default drive mode.
 
         Note:
-            go idles blocks execution until the program is exited when START + END are
-            pressed simultaneously.
+            go blocks execution until the program exits, when BACK and START are
+            pressed together.
+
+            On the NeoRacer, go enters the user program at once, because the
+            FlySky handset has no START button. Press Ctrl-C in the terminal to
+            exit.
         """
         pass
 

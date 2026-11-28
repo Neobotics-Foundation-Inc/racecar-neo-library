@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -11,8 +11,8 @@ File Description: Contains the Display module of the racecar_core library
 import cv2 as cv
 import numpy as np
 import os
-class NDArray:  # inline stub; nptyping is deliberately not a dependency
-    def __class_getitem__(cls, item): return cls
+class NDArray:  # stub - no runtime dependency on nptyping
+    def __class_getitem__(cls, _): return cls
 
 import rclpy as ros2
 from std_msgs.msg import String
@@ -70,8 +70,8 @@ class DisplayReal(Display):
         raise NotImplementedError(_NO_PIXELS)
 
     def show_text(self, text: str, scroll_speed: float = 2.0) -> None:
-        # The firmware ignores scroll_speed; it scrolls automatically when the
-        # rendered text exceeds the 8-pixel panel width.
+        # The panel firmware does not use scroll_speed. It scrolls text that is
+        # wider than the 8-pixel panel by itself.
         msg = String()
         msg.data = text
         self.__text_pub.publish(msg)

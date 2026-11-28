@@ -1,6 +1,6 @@
 """
 Copyright MIT
-MIT License
+GNU General Public License v3.0
 
 BWSI Autonomous RACECAR Course
 Racecar Neo LTS
@@ -12,8 +12,8 @@ File Description: Defines the interface of the Camera module of the racecar_core
 import abc
 import copy
 import numpy as np
-class NDArray:  # inline stub; nptyping is deliberately not a dependency
-    def __class_getitem__(cls, item): return cls
+class NDArray:  # stub - no runtime dependency on nptyping
+    def __class_getitem__(cls, _): return cls
 
 
 class Camera(abc.ABC):
@@ -134,6 +134,10 @@ class Camera(abc.ABC):
             A two-dimensional array indexed from top left to the bottom right storing
             the distance of each pixel from the car in cm.
 
+        Note:
+            On the NeoRacer, this function raises NotImplementedError, because
+            the NeoRacer has no depth camera. Use rc.lidar for range data.
+
         Example::
 
             # Initialize image with the most recent depth image captured by the camera
@@ -152,6 +156,10 @@ class Camera(abc.ABC):
         Returns:
             A two-dimensional array indexed from top left to the bottom right storing
             the distance of each pixel from the car in cm.
+
+        Note:
+            On the NeoRacer, this function raises NotImplementedError, because
+            the NeoRacer has no depth camera. Use rc.lidar for range data.
 
         Warning:
             This function breaks the start-update paradigm and should only be used in
